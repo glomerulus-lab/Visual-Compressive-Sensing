@@ -370,7 +370,7 @@ def process_result_data_new(img_file, method, target_param, pixel_file=None,
         sys.exit(0)
         
     data = load_dataframe_new(img_nm, method, pixel_file, gaussian_file, V1_file)
-    data['sparse_freq'] = data['sparse_freq'].fillna(0)
+    data['blob_size'] = data['blob_size'].fillna(0)
     data['cell_size'] = data['cell_size'].fillna(0)
     return data
 
@@ -519,9 +519,9 @@ def get_min_error_data(method, observation, data_df, target_param):
         # Check the method first to check what parameter it has to deal with
         # since dwt takes two more parameters
         if (method.lower() == 'dct'):
-            param_list = ['num_cell', 'sparse_freq', 'cell_size', 'alp']
+            param_list = ['num_cell', 'blob_size', 'cell_size', 'alp']
         elif (method.lower() == 'dwt') :
-            param_list = ['num_cell', 'sparse_freq', 'cell_size', 'alp', 'lv']
+            param_list = ['num_cell', 'blob_size', 'cell_size', 'alp', 'lv']
             
     else :
         if (method == 'dct'):

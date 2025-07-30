@@ -12,5 +12,7 @@ gdown
 scikit-image
 scikit-learn
 dask
-jupyterlab
+jupyter
 pandas
+seaborn
+pywavelets

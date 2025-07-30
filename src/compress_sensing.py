@@ -44,16 +44,16 @@ def generate_Y(W, img_arr):
     y = W @ img_arr.reshape(n * m, 1)
     return y
 
-def generate_V1_weights(num_cell, dim, cell_size, sparse_freq):
+def generate_V1_weights(num_cell, dim, cell_size, blob_size, center = None):
     # Store generated V1 cells in W
     n, m = dim
-    W = V1_weights(num_cell, dim, cell_size, sparse_freq)
+    W = V1_weights(num_cell, dim, cell_size, blob_size, center)
     # Resize W to shape (num_cell, height of image, width of image) for 
     # fetching into function
     W = W.reshape(num_cell, n, m)
     return W
 
-def generate_V1_observation(img_arr, num_cell, cell_size, sparse_freq):
+def generate_V1_observation(img_arr, num_cell, cell_size, blob_size, center = None):
     ''' 
     Automatically generates variables needed for 
     data reconstruction using V1 weights.
@@ -71,7 +71,7 @@ def generate_V1_observation(img_arr, num_cell, cell_size, sparse_freq):
         Determines field size of opened and closed blob of data. 
         Affect the data training.
         
-    sparse_freq : int
+    blob_size : int
         Determines filed frequency on how frequently 
         opened and closed area would appear. 
         Affect the data training.
@@ -86,7 +86,7 @@ def generate_V1_observation(img_arr, num_cell, cell_size, sparse_freq):
     '''
 
     dim = np.asanyarray(img_arr).shape[:2]
-    W = generate_V1_weights(num_cell, dim, cell_size, sparse_freq)
+    W = generate_V1_weights(num_cell, dim, cell_size, blob_size, center)
     # Retrieve y from W @ imgArr
     y = generate_Y(W, img_arr)
     return W, y
@@ -311,7 +311,7 @@ def wavelet_reconstruct(W, y, alpha, sample_sz, n, m,
     return img
 
 def generate_observations(img_arr, num_cell, observation, cell_size = None,
-                          sparse_freq = None):
+                          blob_size = None):
     ''' 
     Helper function to generate observations using the specified technique.
     
@@ -333,7 +333,7 @@ def generate_observations(img_arr, num_cell, observation, cell_size = None,
         Determines field size of opened and closed blob of data. 
         Affect the data training.
         
-    sparse_freq : int
+    blob_size : int
         Determines filed frequency on how 
         frequently opened and closed area would appear. 
         Affect the data training.
@@ -347,19 +347,19 @@ def generate_observations(img_arr, num_cell, observation, cell_size = None,
         (num_V1_weights/sample_size, 1) shape. Dot product of W and image.
    
     '''
-    # Check if the cell_size and sparse_freq is none while it is conduction 
+    # Check if the cell_size and blob_size is none while it is conduction 
     # V1 observation
     if (observation.lower() == "v1" and (cell_size == None
-                                         or sparse_freq == None)) :
+                                         or blob_size == None)) :
         print(f"For {observation} observation, both cell_size"+
-              " and sparse_freq parameters are required")
+              " and blob_size parameters are required")
         sys.exit(0)
     if (type(num_cell) == str):
         print(num_cell)
         print(type(num_cell))
         sys.exit(0)
     if (observation.lower() == "v1"):
-        W, y = generate_V1_observation(img_arr, num_cell, cell_size, sparse_freq)
+        W, y = generate_V1_observation(img_arr, num_cell, cell_size, blob_size)
     elif (observation.lower() == "gaussian"):
         W, y = generate_gaussian_observation(img_arr, num_cell)
     elif (observation.lower() == "pixel"):
@@ -431,7 +431,7 @@ def reconstruct(W, y, alpha = None, fit_intercept = False, method = 'dct',
     #return reformed img
     return img
 
-def color_experiment(img_arr, num_cell, cell_size = None, sparse_freq = None,
+def color_experiment(img_arr, num_cell, cell_size = None, blob_size = None,
                      alpha = None, fit_intercept = False, method = 'dct',
                      observation = 'pixel', lv = 4, dwt_type = 'db2', W = None, rand_index=None) :
     ''' 
@@ -450,7 +450,7 @@ def color_experiment(img_arr, num_cell, cell_size = None, sparse_freq = None,
         Determines field size of opened and closed blob of data. 
         Affect the data training.
         
-    sparse_freq : int
+    blob_size : int
         Determines filed frequency on how frequently opened and 
         closed area would appear. Affect the data training.
       
@@ -513,7 +513,7 @@ def color_experiment(img_arr, num_cell, cell_size = None, sparse_freq = None,
         
         else :
             W, y = generate_observations(img_arr_pt, num_cell, observation,
-                                     cell_size, sparse_freq)
+                                     cell_size, blob_size)
             
         if (method == 'dct') :
             reconst = reconstruct(W, y, alpha, method = method)
@@ -531,7 +531,7 @@ def color_experiment(img_arr, num_cell, cell_size = None, sparse_freq = None,
 
 
 def large_img_experiment(img_arr, num_cell, cell_size = None,
-                         sparse_freq = None, filter_dim = (16, 16),
+                         blob_size = None, filter_dim = (16, 16),
                          alpha = None, method = 'dct', observation = 'pixel',
                          lv = 2, dwt_type = 'db2', fixed_weights = False,
                          color = False) :
@@ -555,7 +555,7 @@ def large_img_experiment(img_arr, num_cell, cell_size = None,
         Affect the data training.
         Default set to None as only V1 obervation requires it
         
-    sparse_freq : int
+    blob_size : int
         Determines filed frequency on how frequently 
         opened and closed area would appear. Affect the data training.
         Default set to None as only V1 obervation requires it
@@ -650,8 +650,8 @@ def large_img_experiment(img_arr, num_cell, cell_size = None,
         dim = (filt_n, filt_m)
         # Store generated V1 cells in W
         if observation == 'V1':
-            W = generate_V1_weights(num_cell, dim, cell_size, sparse_freq)
-            # W = V1_weights(num_cell, dim, cell_size, sparse_freq)
+            W = generate_V1_weights(num_cell, dim, cell_size, blob_size)
+            # W = V1_weights(num_cell, dim, cell_size, blob_size)
             # W = W.reshape(num_cell, filt_n, filt_m)
         elif observation == 'pixel':
             n, m = img_arr.shape[:2]
@@ -708,7 +708,7 @@ def large_img_experiment(img_arr, num_cell, cell_size = None,
                 img_arr_pt,  
                 num_cell, 
                 cell_size, 
-                sparse_freq, 
+                blob_size, 
                 alpha = alpha, 
                 method = method, 
                 observation = observation,
@@ -726,7 +726,7 @@ def large_img_experiment(img_arr, num_cell, cell_size = None,
             # else, all W is randomized for each batch of reconstruction
             else :
                 W, y = generate_observations(img_arr_pt, num_cell, observation,
-                                         cell_size, sparse_freq)
+                                         cell_size, blob_size)
 
             W_model = W.reshape(num_cell, filt_n, filt_m)    
             #print(W.shape)

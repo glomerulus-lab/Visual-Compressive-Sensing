@@ -268,6 +268,7 @@ def V1_weights(num_weights, dim, size, spatial_freq, center=None, scale=1, seed=
         # first generate centered weights
         c = (int(dim[0]/ 2), int(dim[1]/2)) # center of the visual field
         C = V1_covariance_matrix(dim, size, spatial_freq, c, scale) 
+
         W_centered = np.random.multivariate_normal(mean=np.zeros(dim[0] * dim[1]), cov=C, size=num_weights)
         W_centered = W_centered.reshape(-1, dim[0], dim[1])
         
@@ -281,6 +282,7 @@ def V1_weights(num_weights, dim, size, spatial_freq, center=None, scale=1, seed=
 
     elif center is not None:
         C = V1_covariance_matrix(dim, size, spatial_freq, center, scale)
+
         W = np.random.multivariate_normal(mean=np.zeros(dim[0] * dim[1]), cov=C, size=num_weights)
         
     return W
