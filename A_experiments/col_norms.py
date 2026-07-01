@@ -76,7 +76,7 @@ plt.ylabel("Frequency")
 plt.legend()
 plt.yscale('log')
 plt.show()
-plt.savefig("Dot Hist") # saves a level above
+plt.savefig("Dot_Hist.svg") # saves a level above
 
 plt.figure()
 plt.hist(v1_norms.flatten(), bins, cumulative = False, density = True, label = "v1")

@@ -18,6 +18,9 @@ dot products, leading to high MC?
 If a frequency's coefficient is low but it creates a high dot product,
 then that frequency is not very useful for reconstruction but messes with MC.
 Can we discard these frequencies in our MC computation?
+
+
+Abandoned
 '''
 
 def dot_matrix_simple(measurement_matrix):

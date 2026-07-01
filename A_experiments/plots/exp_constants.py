@@ -1,0 +1,11 @@
+IMAGE_FILE  = "barbara.bmp"
+
+PATCH_SIZE  = 32
+PATCH_IDXS  = [58, 169, 206, 233]
+
+N_OBS = 256
+ALPHA = 1
+CELL_SIZE = 50
+BLOB_SIZE = 6
+
+NUM_RUNS = 100
