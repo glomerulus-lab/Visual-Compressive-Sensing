@@ -183,7 +183,7 @@ def process_image(img, color = False, visibility = False):
 
     root = search_root()
 
-    img_path = Image.open(os.path.join(root, 'image/{img}'.format(img=img)))
+    img_path = Image.open(os.path.join(root, 'images/{img}'.format(img=img)))
     if not color:
         img_path = ImageOps.grayscale(img_path)
     if visibility:

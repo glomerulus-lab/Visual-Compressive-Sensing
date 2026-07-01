@@ -38,7 +38,7 @@ def main() :
     # Set up hyperparameters that would affect results
     file = sys.argv[1]
     print(sys.argv[2] == None)
-    image_path ='../image/{img}'.format(img = file)
+    image_path ='../images/{img}'.format(img = file)
     delay_list = []
     params = []
     alpha = np.logspace(-3, 3, 7)

@@ -187,7 +187,7 @@ def main() :
     
     img, observation, mode, alpha_list, num_cell, cell_size, sparse_freq = process_input(sys.argv)
     root = search_root()
-    image_path = os.path.join(root, 'image/{img}'.format(img = img))
+    image_path = os.path.join(root, 'images/{img}'.format(img = img))
     delay_list = []
     params = []
     method = 'dct'

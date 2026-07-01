@@ -60,7 +60,7 @@ def search(img_arr, repetition = 20, alpha = np.logspace(-3, 3, 7), classical_sa
 
 def main():
     file = sys.argv[1]
-    image_path ='../image/{img}'.format(img = file)
+    image_path ='../images/{img}'.format(img = file)
     image_nm = image_path.split('/')[2].split('.')[0]
     img = Image.open(image_path)
     img = ImageOps.grayscale(img)

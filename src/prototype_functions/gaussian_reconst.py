@@ -20,7 +20,7 @@ def main():
     alpha_list = [int(i) for i in alpha_list]
     
     # Open image
-    img = Image.open("../image/{image}".format(image = file))
+    img = Image.open("../images/{image}".format(image = file))
     img = ImageOps.grayscale(img)
     img_arr = np.asarray(img)
     

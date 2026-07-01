@@ -41,7 +41,7 @@ def reconst(img_arr, alpha, sample_sz):
 
 def main():
     file = input("Enter image File: ")
-    image_path = '../image/{image}'.format(image = file)
+    image_path = '../images/{image}'.format(image = file)
     
     image_nm = file.split('.')[0]
     

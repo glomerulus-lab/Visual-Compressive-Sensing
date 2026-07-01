@@ -174,7 +174,7 @@ def main() :
     }
     
     img, observation, dwt_type, lv, alpha_list, num_cell, cell_size, sparse_freq = process_input(sys.argv)
-    image_path ='../image/{img}'.format(img = img)
+    image_path ='../images/{img}'.format(img = img)
     delay_list = []
     params = []
     method = 'dwt'
@@ -187,7 +187,7 @@ def main() :
     img_arr = np.asarray(img)
     #plt.imshow(img_arr)
     #plt.show()
-    save_path = os.path.join("../rloweresult/{img_nm}/V1".format(img_nm = image_nm))
+    save_path = os.path.join("../result/{img_nm}/V1".format(img_nm = image_nm))
 
     # TODO: if pixel, change search_list only to use rep, alpha, num_cell
     
