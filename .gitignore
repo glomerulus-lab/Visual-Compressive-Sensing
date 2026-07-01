@@ -3,3 +3,4 @@ result_*.csv
 src/dask-worker-space/
 src/__pycache__
 experiment/dask-worker-space
+src.egg-info/
