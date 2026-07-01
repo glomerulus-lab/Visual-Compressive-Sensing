@@ -74,7 +74,7 @@ plt.show()
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_5_1.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_5_1.png)
     
 
 
@@ -84,7 +84,7 @@ plt.show()
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_5_3.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_5_3.png)
     
 
 
@@ -136,13 +136,13 @@ plt.show()
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_8_0.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_8_0.png)
     
 
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_8_1.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_8_1.png)
     
 
 
@@ -190,7 +190,7 @@ plt.show()
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_9_1.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_9_1.png)
     
 
 
@@ -247,13 +247,13 @@ plt.show()
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_11_0.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_11_0.png)
     
 
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_11_1.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_11_1.png)
     
 
 
@@ -301,7 +301,7 @@ plt.show()
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_12_1.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_12_1.png)
     
 
 
@@ -311,7 +311,7 @@ plt.show()
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_12_3.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_12_3.png)
     
 
 
@@ -358,13 +358,13 @@ plt.show()
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_14_0.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_14_0.png)
     
 
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_14_1.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_14_1.png)
     
 
 
@@ -412,7 +412,7 @@ plt.show()
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_15_1.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_15_1.png)
     
 
 
@@ -422,7 +422,7 @@ plt.show()
 
 
     
-![png](compress_sensing_library_example_files/compress_sensing_library_example_15_3.png)
+![png](images/compress_sensing_library_example_files/compress_sensing_library_example_15_3.png)
     
 
 
