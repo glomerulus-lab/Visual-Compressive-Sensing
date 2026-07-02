@@ -11,7 +11,7 @@ import pandas as pd
 sys.path.append('..')
 from src.compress_sensing import *
 from src.utility import *
-from A_experiments.theta_exp_improved import *
+from plots.theta_exp_improved import *
 
 def compute_results(num_obs):
 

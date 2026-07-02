@@ -8,7 +8,7 @@ import sys
 sys.path.append('..')
 from src.compress_sensing import *
 from src.utility import *
-from A_experiments.theta_exp_improved import *
+from plots.theta_exp_improved import *
 
 '''
 Instead of dividing by the col norm, which may be less than 0,

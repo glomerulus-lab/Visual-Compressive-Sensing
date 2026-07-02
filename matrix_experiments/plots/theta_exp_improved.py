@@ -34,7 +34,6 @@ small_img = "tree_part1.jpg"
 big_img="peppers.png"
 method = 'dct'
 observation="pixel"
-mode = '-c'
 alpha=0.1
 num_cell_100 = 100
 num_cell_300 = 300
@@ -51,9 +50,9 @@ plt.ion()
 
 #Load Images:
 # Represent image as numpy array to make it easier to process
-small_img_arr = process_image(small_img, mode)
+small_img_arr = process_image(small_img, color=True)
 small_img_arr_gray = process_image(small_img, False) #change from 'gray' to False
-big_img_arr = process_image(big_img, mode)
+big_img_arr = process_image(big_img, color=True)
 big_img_arr_gray = process_image(big_img, False) #change from 'gray' to False
 
 

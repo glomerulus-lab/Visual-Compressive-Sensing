@@ -6,7 +6,7 @@ from src.compress_sensing import *
 from src.utility import *
 from PIL import Image, ImageOps
 import sys
-from A_experiments.theta_exp_improved import *
+from plots.theta_exp_improved import *
 
 '''
 c = coefficient vector
