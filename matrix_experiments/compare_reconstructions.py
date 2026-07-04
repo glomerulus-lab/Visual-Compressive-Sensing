@@ -5,10 +5,9 @@ import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 import sys
 
-sys.path.append('..')
 from src.compress_sensing import *
 from src.utility import *
-from plots.theta_exp_improved import *
+from .plots.theta_exp_improved import *
 
 '''
 Compare reconstructions for small_img_arr_gray with different parameters

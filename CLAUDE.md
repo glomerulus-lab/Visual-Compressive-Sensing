@@ -49,6 +49,8 @@ A vendored (not a git submodule) copy of an external research package providing 
 
 Jupyter notebooks and standalone scripts used for exploratory analysis and generating paper figures. These are not part of the importable package, often duplicate/fork logic from `src/` at various points in time, and are not kept in sync with it — don't assume functions here match current `src/` signatures.
 
+`matrix_experiments/` and `matrix_experiments/plots/` are real packages (each has an `__init__.py`) that import `src` absolutely and their own siblings via single-dot relative imports (e.g. `from .plots.theta_exp_improved import *`, `from .extract_patches import *`). Because of the relative imports, these scripts must be run as modules from the repo root — e.g. `python -m matrix_experiments.add_epsilon`, `python -m matrix_experiments.plots.theta_exp_improved` — not as `python matrix_experiments/add_epsilon.py`, which fails with `ModuleNotFoundError` since direct script execution never puts the repo root on `sys.path` or gives the module a package context. This mirrors how `src/hyperparam_sweep_filter.py` and `src/figure.py` are already documented to run (`python -m src.hyperparam_sweep_filter`).
+
 ### `compress_sensing_example.md`
 
 Stale usage walkthrough referencing an older API (`filter_reconstruct`, `color_reconstruct`, `generate_pixel_variables`, a `mode` string param) that no longer matches `src/compress_sensing.py`. Useful only for understanding intent/history, not as a working reference — prefer reading `src/compress_sensing.py` directly for current function names and signatures.

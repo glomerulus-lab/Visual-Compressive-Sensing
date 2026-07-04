@@ -6,11 +6,10 @@ from PIL import Image, ImageOps
 import sys
 import matplotlib.cm as cm
 
-sys.path.append('..')
 from src.compress_sensing import *
 from src.utility import *
-from plots.extract_patches import *
-from plots.exp_constants import *
+from .extract_patches import *
+from .exp_constants import *
 
 '''
 Big question associated with this folder: 

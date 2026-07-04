@@ -3,12 +3,11 @@ import matplotlib.pyplot as plt
 import sys
 import pandas as pd
 
-sys.path.append('../')
 from src.compress_sensing import *
 from src.utility import *
-from plots.theta_exp_improved import *
-from plots.extract_patches import *
-from plots.exp_constants import *
+from .theta_exp_improved import *
+from .extract_patches import *
+from .exp_constants import *
 
 '''
 PLOTS: 

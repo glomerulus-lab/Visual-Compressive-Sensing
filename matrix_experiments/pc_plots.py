@@ -8,10 +8,9 @@ import seaborn as sns
 import pandas as pd
 
 
-sys.path.append('..')
 from src.compress_sensing import *
 from src.utility import *
-from plots.theta_exp_improved import *
+from .plots.theta_exp_improved import *
 
 def compute_results(num_obs):
 
