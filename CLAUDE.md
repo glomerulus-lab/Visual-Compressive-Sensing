@@ -8,14 +8,18 @@ Research codebase for compressed sensing (CS) image reconstruction. It compares 
 
 ## Setup
 
-```
-pip install -r requirements.txt
-pip install -e .
-```
+- All Python dependencies **must be installed, synchronized, and locked** using uv
+- Never use pip, pip-tools, poetry, or conda directly for dependency management
 
-Installing with `-e .` makes `src` importable as a package (see `setup.py`), which all modules assume (`from src.compress_sensing import *`, etc.) — always run scripts from the repository root.
+Use these commands:
 
-There is no test suite (`pytest` is listed in `requirements.txt` but no test files exist) and no lint config. Do not invent test/lint commands.
+- Install dependencies: `uv add <package>`
+- Remove dependencies: `uv remove <package>`
+- Sync environment: `uv sync`
+- Lock dependencies: `uv lock`
+
+The development environment is already installed within `.venv/`.
+This was setup by running `uv venv; uv pip install -r requirements.txt`.
 
 ## Architecture
 
