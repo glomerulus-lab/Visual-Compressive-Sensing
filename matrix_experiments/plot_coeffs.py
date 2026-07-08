@@ -7,7 +7,7 @@ import sys
 
 from src.compress_sensing import *
 from src.utility import *
-from .plots.theta_exp_improved import *
+from .core import *
 
 '''
 Plot the coefficient vectors for an image and its V1 reconstruction.

@@ -6,7 +6,7 @@ from PIL import Image, ImageOps
 
 from src.compress_sensing import *
 from src.utility import *
-from .theta_exp_improved import *
+from ..core import *
 from .extract_patches import *
 from .exp_constants import *
 

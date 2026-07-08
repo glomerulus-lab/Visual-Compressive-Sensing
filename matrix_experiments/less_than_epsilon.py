@@ -7,7 +7,7 @@ import sys
 
 from src.compress_sensing import *
 from src.utility import *
-from .plots.theta_exp_improved import *
+from .core import *
 
 '''
 If some col norms are close to 0, the system can't see that frequency and dividing

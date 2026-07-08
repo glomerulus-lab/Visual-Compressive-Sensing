@@ -7,7 +7,7 @@ import sys
 
 from src.compress_sensing import *
 from src.utility import *
-from .plots.theta_exp_improved import *
+from .core import *
 
 '''
 Try to table the coordinates of the coefficient vectors with the

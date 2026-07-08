@@ -6,8 +6,6 @@ numpy
 scipy
 matplotlib
 python-dotenv
-torch
-torchvision
 gdown
 scikit-image
 scikit-learn

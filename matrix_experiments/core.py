@@ -8,8 +8,8 @@ import matplotlib.cm as cm
 
 from src.compress_sensing import *
 from src.utility import *
-from .extract_patches import *
-from .exp_constants import *
+from .plots.extract_patches import *
+from .plots.exp_constants import *
 
 '''
 Big question associated with this folder: 
