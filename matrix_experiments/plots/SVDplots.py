@@ -6,9 +6,10 @@ from PIL import Image, ImageOps
 
 from src.compress_sensing import *
 from src.utility import *
-from ..core import *
-from .extract_patches import *
-from .exp_constants import *
+
+from .core import *
+from plots.extract_patches import *
+#from .exp_constants import *
 
 
 NUM_OBS_LIST = [256]
@@ -101,7 +102,7 @@ def plot_SVD(num_obs, patches, savefile):
     plt.show()
 
 
-def plot_SVD_single_patch(num_obs, patches, savefile):
+def plot_SVD_single_patch(num_obs, patches, patch_idx, savefile):
     """
     Plot the singular value spectra of Theta for single patch.
 
@@ -110,11 +111,11 @@ def plot_SVD_single_patch(num_obs, patches, savefile):
             Number of observations.
         patches (list[ndarray]): 
             Full list of extracted image patches.
+        patch_idx (int):
+            Patch to plot
         savefile (str): 
             Output path for the saved figure.
     """
-    patch_idx = 58 # TODO: change for other patches
-
     S_V1_256_, S_pix_256_, S_gauss_256_ = compute_patch_singular_values(patches[patch_idx], 256)
 
     plt.figure(figsize=(8, 6))
@@ -132,5 +133,5 @@ def plot_SVD_single_patch(num_obs, patches, savefile):
     plt.savefig(savefile)
     plt.show()
 
-plot_SVD(256, patches, "SVD_256_patches.svg")
-plot_SVD_single_patch(256, patches, "SVD_patch_58.svg")
+plot_SVD(256, patches, "figures/SVD_256_patches.svg")
+plot_SVD_single_patch(256, patches, 58, "figures/SVD_patch_58.svg")
