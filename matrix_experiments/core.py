@@ -320,7 +320,7 @@ def generate_ctDc(img_arr, obs_type, num_cell, norm = 2, diagonal = 0, cell_size
         opened and closed area would appear. 
         Affect the data training.
     '''
-    coeffs= generate_coeff_vector(small_img_arr_gray,num_cell,cell_size,blob_size).flatten()
+    coeffs= generate_coeff_vector(img_arr,num_cell,cell_size,blob_size).flatten()
     dot_vec = dot_product_matrix(img_arr, obs_type, num_cell, cell_size, blob_size, center)
     # dot_vec = np.linalg.inv(dot_vec)
     
@@ -370,7 +370,7 @@ def generate_Dc(img_arr, obs_type, num_cell, norm = 1, cell_size = None, blob_si
         Affect the data training.
     '''
 
-    coeffs= generate_coeff_vector(small_img_arr_gray,num_cell,cell_size,blob_size).flatten()
+    coeffs= generate_coeff_vector(img_arr,num_cell,cell_size,blob_size).flatten()
     dot_vec = dot_product_matrix(img_arr, obs_type, num_cell, cell_size, blob_size, center)
 
     if norm <= 0:
