@@ -29,7 +29,7 @@ U = basis_matrix
 theta = A = design_matrix
 '''
 
-small_img = "tree_part1.jpg"
+small_img = "images/tree_part1.jpg"
 big_img="peppers.png"
 method = 'dct'
 observation="pixel"
