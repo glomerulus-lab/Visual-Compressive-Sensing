@@ -101,6 +101,13 @@ These operate on the small, fixed 30×30 grayscale image loaded by
     square patches.
   - `show_patches_grid(patches, cols=16)` — renders a grid of patches and
     saves it to `grid_patches.svg`.
+- **`plots/util.py`** — plotting helpers shared by `pc_plots.py` (whole-image)
+  and `paper_aligned_plots.py` (per-patch): `pc_scatter_plots`,
+  `plot_smoothed_error`, `cumsum_err`, `compare_smoothed_errors`,
+  `plot_first_pc`, `plot_top_pcs`, `coeff_vectors_hist`, `coeff_vectors_cdf`.
+  Each takes an optional `patch_idx` (default `None`) that adds patch
+  labeling/filenames when set; PC-image reshaping is derived from the data
+  itself (`sqrt` of vector length) rather than a hardcoded 30/32 patch size.
 
 ### Image-based
 Works with full images or single patches
@@ -111,12 +118,13 @@ Works with full images or single patches
 - **`plots/pc_plots.py`** — `compute_results(num_obs)` builds, for V1/Pixel/
   Gaussian, the design matrix, its SVD, a LASSO reconstruction, and the
   estimated vs. true coefficients projected onto the design matrix's
-  principal components, at `num_obs` ∈ {100, 300}. Plotting helpers
-  (`pc_scatter_plots`, `compare_smoothed_errors`, `plot_first_pc`,
-  `plot_top_pcs`, `coeff_vectors_hist`, `coeff_vectors_cdf`) turn that into
-  PC scatter plots, per-component error curves, PCs rendered as images, and
-  coefficient sparsity histograms/CDFs. Similar to 
-  `plots/paper_aligned_plots.py`.
+  principal components, at `num_obs` ∈ {100, 300}. Uses `plots/util.py`'s
+  plotting helpers (`pc_scatter_plots`, `compare_smoothed_errors`,
+  `plot_first_pc`, `plot_top_pcs`, `coeff_vectors_hist`, `coeff_vectors_cdf`)
+  to turn that into PC scatter plots, per-component error curves, PCs
+  rendered as images, and coefficient sparsity histograms/CDFs. Whole-image
+  counterpart to `plots/paper_aligned_plots.py`, which shares the same
+  plotting helpers.
 
 ### Patch-based
 These tile `images/barbara.bmp` into 32×32 patches via `extract_patches`
@@ -128,9 +136,10 @@ analyses per patch.
   (its name suggests it's what generates figures actually used in the
   paper). `compute_patch_results`/`get_results`/`run_selected_patches`
   compute the same SVD/PC/coefficient results as `pc_plots.py` but per
-  patch, with both single-patch and `_all_patches` grid variants of every
-  plot (PC scatter, PC-rank plots, smoothed/cumulative error, PCs as
-  images, coefficient histograms/CDFs).
+  patch, using the shared `plots/util.py` helpers (passing `patch_idx`) for
+  the single-patch plots, plus its own `_all_patches` grid variants of every
+  plot (PC scatter, PC-rank plots, cumulative error, PCs as images,
+  coefficient histograms/CDFs) that only make sense across multiple patches.
 - **`plots/SVD_dim_patches.py`** — patch-based version of `SVD_dim.py`:
   effective dimension of `theta` per patch over `NUM_RUNS` runs, boxplotted
   both across the 4 selected patches (grid) and for a single patch.
@@ -145,8 +154,11 @@ analyses per patch.
   `mutual_coherence_matrix`). Because a module-level `def` always wins over
   a preceding `from .core import *`, these files use their *own* versions,
   not `core.py`'s, despite the wildcard import.
-- `pc_plots.py` and `plots/paper_aligned_plots.py` independently define
-  several identically-named functions (`pc_scatter_plots`, `plot_top_pcs`,
-  `coeff_vectors_hist`, `coeff_vectors_cdf`, `plot_first_pc`,
-  `compare_smoothed_errors`). They don't import each other — these are
-  parallel forks (whole-image vs. per-patch), not shared code.
+- `pc_plots.py` and `plots/paper_aligned_plots.py` used to independently
+  define several identically-named functions (`pc_scatter_plots`,
+  `plot_top_pcs`, `coeff_vectors_hist`, `coeff_vectors_cdf`, `plot_first_pc`,
+  `compare_smoothed_errors`, `plot_smoothed_error`) with subtly different
+  behavior. These are now consolidated in `plots/util.py`; `pc_plots.py`'s
+  histogram/CDF output changed slightly as a result (percentile-based bins
+  and log-scaled axes, matching what `paper_aligned_plots.py` already did,
+  instead of `pc_plots.py`'s old max-value bins and linear axes).
