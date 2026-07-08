@@ -29,30 +29,6 @@ U = basis_matrix
 theta = A = design_matrix
 '''
 
-small_img = "images/tree_part1.jpg"
-big_img="peppers.png"
-method = 'dct'
-observation="pixel"
-alpha=0.1
-num_cell_100 = 100
-num_cell_300 = 300
-cell_size = 7    # receptive field size (200;.001 like gaussian)
-blob_size = 2  # formerly sparse_freq            
-num = 20
-
-## For wavelet variable
-lv= 2
-dwt_type= 'db2'
-
-
-plt.ion()
-
-#Load Images:
-# Represent image as numpy array to make it easier to process
-small_img_arr = process_image(small_img, color=True)
-small_img_arr_gray = process_image(small_img, False) #change from 'gray' to False
-big_img_arr = process_image(big_img, color=True)
-big_img_arr_gray = process_image(big_img, False) #change from 'gray' to False
 
 
 def generate_design_matrix(measurement_matrix):
@@ -402,11 +378,11 @@ def generate_Dc(img_arr, obs_type, num_cell, norm = 1, cell_size = None, blob_si
     else:
         return np.linalg.norm(dot_vec @ coeffs, norm)
 
-'''
-MC plot
-'''
 
 def MC_box_plot(num_runs, num_cell):
+    '''
+    mutual coherence (MC) plot
+    '''
     # mutual coherence for each observation type
     mc_v1 = mutual_coherence_matrix(small_img_arr_gray, n=num_runs, num_cell=num_cell, obs_type='V1', cell_size=cell_size, blob_size=blob_size)
     mc_pixel = mutual_coherence_matrix(small_img_arr_gray, n=num_runs, num_cell=num_cell, obs_type='pixel')
@@ -420,44 +396,6 @@ def MC_box_plot(num_runs, num_cell):
     plt.title(f"Mutual Coherence ({num_runs} runs, {num_cell} blobs)")
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.savefig(f"MC_box_plot_{num_runs}_runs_{num_cell}_blobs.svg")
-
-# MC_box_plot(20, num_cell_100)
-# MC_box_plot(20, num_cell_300)
-
-# MC_box_plot(100, num_cell_100)
-# MC_box_plot(100, num_cell_300)
-
-'''
-dot product
-'''
-blob_size = 2
-
-# dot product matrices
-v1_dot = dot_product_matrix(small_img_arr_gray, "V1", num_cell_300, cell_size, blob_size)
-pix_dot = dot_product_matrix(small_img_arr_gray, "pixel", num_cell_300, cell_size, blob_size)
-gauss_dot = dot_product_matrix(small_img_arr_gray, "gaussian", num_cell_300, cell_size, blob_size)
-
-# side by side plot
-fig, axs = plt.subplots(1, 3, figsize=(18, 6))
-for ax, mat, title in zip(axs, [v1_dot, pix_dot, gauss_dot], ["V1", "Pixel", "Gaussian"]):
-    im = ax.imshow(mat, cmap='viridis')
-    ax.set_title(f"{title} Dot Product Matrix")
-    ax.set_xlabel("Column Index")
-    ax.set_ylabel("Column Index")
-
-# one colorbar for all heatmaps
-fig.colorbar(im, ax=axs.ravel().tolist(), shrink=0.6, label="Dot Product Value")
-plt.suptitle("Dot Products", fontsize=15, y=0.98, x = 0.98)
-# plt.savefig("Dot_Product_Heatmaps.svg", dpi=300)
-
-# PATCHES CODE -----------------------------------------------------------------------------------
-
-NUM_CELL = 256
-NUM_MC_RUNS = 100
-
-img = process_image("barbara.bmp", color=False)
-patches = extract_patches(img, PATCH_SIZE)
-
 
 def design_matrix_from_patch(patch, obs_type, num_cell):
     """
@@ -792,6 +730,75 @@ def MC_box_plot_all_patches(patches, patch_idxs, filename="MC_all_patches.svg"):
     plt.savefig(filename, format="svg", dpi=300)
     plt.close()
 
+
+'''
+Below code was moved from above in the file to remove side-effects from importing core.py
+'''
+
+# small_img = "images/tree_part1.jpg"
+# big_img="peppers.png"
+# method = 'dct'
+# observation="pixel"
+# alpha=0.1
+# num_cell_100 = 100
+# num_cell_300 = 300
+# cell_size = 7    # receptive field size (200;.001 like gaussian)
+# blob_size = 2  # formerly sparse_freq            
+# num = 20
+
+# ## For wavelet variable
+# lv= 2
+# dwt_type= 'db2'
+
+# MC_box_plot(20, num_cell_100)
+# MC_box_plot(20, num_cell_300)
+
+# MC_box_plot(100, num_cell_100)
+# MC_box_plot(100, num_cell_300)
+
+# '''
+# dot product
+# '''
+# blob_size = 2
+
+# # dot product matrices
+# v1_dot = dot_product_matrix(small_img_arr_gray, "V1", num_cell_300, cell_size, blob_size)
+# pix_dot = dot_product_matrix(small_img_arr_gray, "pixel", num_cell_300, cell_size, blob_size)
+# gauss_dot = dot_product_matrix(small_img_arr_gray, "gaussian", num_cell_300, cell_size, blob_size)
+
+# # side by side plot
+# fig, axs = plt.subplots(1, 3, figsize=(18, 6))
+# for ax, mat, title in zip(axs, [v1_dot, pix_dot, gauss_dot], ["V1", "Pixel", "Gaussian"]):
+#     im = ax.imshow(mat, cmap='viridis')
+#     ax.set_title(f"{title} Dot Product Matrix")
+#     ax.set_xlabel("Column Index")
+#     ax.set_ylabel("Column Index")
+
+# # one colorbar for all heatmaps
+# fig.colorbar(im, ax=axs.ravel().tolist(), shrink=0.6, label="Dot Product Value")
+# plt.suptitle("Dot Products", fontsize=15, y=0.98, x = 0.98)
+# # plt.savefig("Dot_Product_Heatmaps.svg", dpi=300)
+
+# # PATCHES CODE -----------------------------------------------------------------------------------
+
+# NUM_CELL = 256
+# NUM_MC_RUNS = 100
+
+# img = process_image("barbara.bmp", color=False)
+# patches = extract_patches(img, PATCH_SIZE)
+
+
+
+# plt.ion()
+
+# #Load Images:
+# # Represent image as numpy array to make it easier to process
+# small_img_arr = process_image(small_img, color=True)
+# small_img_arr_gray = process_image(small_img, False) #change from 'gray' to False
+# big_img_arr = process_image(big_img, color=True)
+# big_img_arr_gray = process_image(big_img, False) #change from 'gray' to False
+
+    
 # TODO: all patches
 # dot_product_histograms_all_patches(patches, PATCH_IDXS, 256)
 # plot_dot_products_all_patches(patches, PATCH_IDXS, 256)

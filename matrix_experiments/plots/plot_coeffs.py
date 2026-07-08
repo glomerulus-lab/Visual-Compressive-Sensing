@@ -7,7 +7,7 @@ import sys
 
 from src.compress_sensing import *
 from src.utility import *
-from .core import *
+from ..core import *
 
 '''
 Plot the coefficient vectors for an image and its V1 reconstruction.

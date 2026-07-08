@@ -47,13 +47,6 @@ from (`from .core import *`, or `from ..core import *` for files inside
   patch-level variants of the above, operating on patches from
   `barbara.bmp` via `extract_patches`.
 
-**Side effect to be aware of:** at import time (module top level, not
-inside a function), `core.py` loads several images from disk, and computes
-and plots V1/pixel/gaussian dot-product matrices for a 300-cell design
-matrix. Because every other script wildcard-imports `core`, this cost and
-this figure are produced every time *any* file in this directory is run or
-imported.
-
 ### `plots/exp_constants.py`
 Constants shared by the patch-based scripts (`IMAGE_FILE`, `PATCH_SIZE`,
 `PATCH_IDXS`, `N_OBS`, `ALPHA`, `CELL_SIZE`, `BLOB_SIZE`, `NUM_RUNS`). Pure
@@ -94,8 +87,6 @@ These operate on the small, fixed 30×30 grayscale image loaded by
 - **`compare_reconstructions.py`** — reconstructs the image from V1
   observations with a fixed vs. a random receptive-field center (both at
   300 cells) and displays them side by side.
-- **`plot_coeffs.py`** — plots true vs. estimated DCT coefficients
-  (log-scale) for V1, Pixel, and Gaussian reconstructions at 300 cells.
 - **`coeffs_table.py`** — builds a pandas table mapping each dot-product
   matrix entry back to its `(kx, ky)` frequency pair and coherence value,
   to look for a relationship between low-coefficient frequencies and high
@@ -119,8 +110,9 @@ These operate on the small, fixed 30×30 grayscale image loaded by
   instead filter out (or count) columns whose norm falls below `epsilon`,
   rather than regularizing them.
 
-## Patch-based analysis scripts (`plots/`)
+## Plotting scripts (`plots/`)
 
+Many of these are patch-based.
 These tile `images/barbara.bmp` into 32×32 patches via `extract_patches`
 and `exp_constants.PATCH_SIZE`/`PATCH_IDXS`, and repeat the single-image
 analyses per patch.
@@ -139,6 +131,9 @@ analyses per patch.
 - **`plots/SVDplots.py`** — plots the raw singular value spectrum (not the
   participation-ratio dimension) of `theta` at 256 observations for each
   selected patch, again with grid and single-patch variants.
+- **`plots/plot_coeffs.py`** — plots true vs. estimated DCT coefficients
+  (log-scale) for V1, Pixel, and Gaussian reconstructions at 300 cells. It
+  operates on the whole small image (not on patches).
 
 ## Known quirks
 
