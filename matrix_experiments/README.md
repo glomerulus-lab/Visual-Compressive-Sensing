@@ -47,32 +47,12 @@ from (`from .core import *`, or `from ..core import *` for files inside
   patch-level variants of the above, operating on patches from
   `barbara.bmp` via `extract_patches`.
 
-### `plots/exp_constants.py`
-Constants shared by the patch-based scripts (`IMAGE_FILE`, `PATCH_SIZE`,
-`PATCH_IDXS`, `N_OBS`, `ALPHA`, `CELL_SIZE`, `BLOB_SIZE`, `NUM_RUNS`). Pure
-data, no logic.
-
-### `plots/extract_patches.py`
-- `extract_patches(img, patch_size)` — tiles an image into non-overlapping
-  square patches.
-- `show_patches_grid(patches, cols=16)` — renders a grid of patches and
-  saves it to `grid_patches.svg`.
-
 ## Single-image analysis scripts
 
 These operate on the small, fixed 30×30 grayscale image loaded by
 `core.py` (`small_img_arr_gray`, from `images/tree_part1.jpg`) at
 `num_cell_100`/`num_cell_300` (100/300 observations).
 
-- **`pc_plots.py`** — `compute_results(num_obs)` builds, for V1/Pixel/
-  Gaussian, the design matrix, its SVD, a LASSO reconstruction, and the
-  estimated vs. true coefficients projected onto the design matrix's
-  principal components, at `num_obs` ∈ {100, 300}. Plotting helpers
-  (`pc_scatter_plots`, `compare_smoothed_errors`, `plot_first_pc`,
-  `plot_top_pcs`, `coeff_vectors_hist`, `coeff_vectors_cdf`) turn that into
-  PC scatter plots, per-component error curves, PCs rendered as images, and
-  coefficient sparsity histograms/CDFs. This is the whole-image counterpart
-  to `plots/paper_aligned_plots.py`.
 - **`SVD_coeffs.py`** — a more ad hoc, script-style version of the same
   analysis at 300 observations only: compares true DCT coefficients against
   the design matrix's singular vectors/values, with scatter plots
@@ -112,7 +92,33 @@ These operate on the small, fixed 30×30 grayscale image loaded by
 
 ## Plotting scripts (`plots/`)
 
-Many of these are patch-based.
+### Utilities
+- **`plots/exp_constants.py`** — Constants shared by the patch-based scripts 
+  (`IMAGE_FILE`, `PATCH_SIZE`,`PATCH_IDXS`, `N_OBS`, `ALPHA`, `CELL_SIZE`, 
+  `BLOB_SIZE`, `NUM_RUNS`).
+- **`plots/extract_patches.py`**:
+  - `extract_patches(img, patch_size)` — tiles an image into non-overlapping
+    square patches.
+  - `show_patches_grid(patches, cols=16)` — renders a grid of patches and
+    saves it to `grid_patches.svg`.
+
+### Image-based
+Works with full images or single patches
+
+- **`plots/plot_coeffs.py`** — plots true vs. estimated DCT coefficients
+  (log-scale) for V1, Pixel, and Gaussian reconstructions at 300 cells. It
+  operates on the whole small image (not on patches).
+- **`plots/pc_plots.py`** — `compute_results(num_obs)` builds, for V1/Pixel/
+  Gaussian, the design matrix, its SVD, a LASSO reconstruction, and the
+  estimated vs. true coefficients projected onto the design matrix's
+  principal components, at `num_obs` ∈ {100, 300}. Plotting helpers
+  (`pc_scatter_plots`, `compare_smoothed_errors`, `plot_first_pc`,
+  `plot_top_pcs`, `coeff_vectors_hist`, `coeff_vectors_cdf`) turn that into
+  PC scatter plots, per-component error curves, PCs rendered as images, and
+  coefficient sparsity histograms/CDFs. Similar to 
+  `plots/paper_aligned_plots.py`.
+
+### Patch-based
 These tile `images/barbara.bmp` into 32×32 patches via `extract_patches`
 and `exp_constants.PATCH_SIZE`/`PATCH_IDXS`, and repeat the single-image
 analyses per patch.
@@ -131,14 +137,9 @@ analyses per patch.
 - **`plots/SVDplots.py`** — plots the raw singular value spectrum (not the
   participation-ratio dimension) of `theta` at 256 observations for each
   selected patch, again with grid and single-patch variants.
-- **`plots/plot_coeffs.py`** — plots true vs. estimated DCT coefficients
-  (log-scale) for V1, Pixel, and Gaussian reconstructions at 300 cells. It
-  operates on the whole small image (not on patches).
 
 ## Known quirks
 
-- `core.py` has real, order-sensitive side effects at import time (image
-  loads + a dot-product computation and plot) — see above.
 - `add_epsilon.py` and `less_than_epsilon.py` locally redefine
   `compute_mutual_coherence` (and `add_epsilon.py` also redefines
   `mutual_coherence_matrix`). Because a module-level `def` always wins over
@@ -149,8 +150,3 @@ analyses per patch.
   `coeff_vectors_hist`, `coeff_vectors_cdf`, `plot_first_pc`,
   `compare_smoothed_errors`). They don't import each other — these are
   parallel forks (whole-image vs. per-patch), not shared code.
-- `plots/SVDplots.py` imports patch extraction via
-  `from plots.extract_patches import *` (an absolute import) rather than
-  the relative `from .extract_patches import *` used everywhere else in
-  `plots/`. This only works if something has already put a top-level
-  `plots` module on `sys.path`; treat it as fragile.

@@ -8,7 +8,7 @@ from src.compress_sensing import *
 from src.utility import *
 
 from .core import *
-from plots.extract_patches import *
+from .extract_patches import *
 #from .exp_constants import *
 
 
