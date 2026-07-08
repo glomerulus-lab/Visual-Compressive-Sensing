@@ -6,7 +6,7 @@ from src.compress_sensing import *
 from src.utility import *
 from PIL import Image, ImageOps
 import sys
-from .core import *
+from ..core import *
 
 '''
 c = coefficient vector
