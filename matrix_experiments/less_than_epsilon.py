@@ -16,6 +16,12 @@ For some epsilon, drop all columns with norms less than epsilon.
 
 '''
 
+# Whole-image analysis parameters (this script's own setup, not read from core.py)
+SMALL_IMG = "tree_part1.jpg"
+NUM_CELL_300 = 300
+CELL_SIZE = 7    # receptive field size (200;.001 like gaussian)
+BLOB_SIZE = 2    # formerly sparse_freq
+
 def compute_mutual_coherence(design_matrix, epsilon = 0) :
     '''
     Compute mutual coherence for generic given matrix
@@ -123,16 +129,23 @@ def mutual_coherence_matrix_mod(img_arr, n, num_cell, obs_type, cell_size = None
             M[i] = compute_mutual_coherence(design_matrix, epsilon)
     return M
 
-epsilon = 20
-num = 5
-#Plot Modded Mutual Coherence
-v1_mc = mutual_coherence_matrix_mod(small_img_arr_gray, num, num_cell_300,  "V1", blob_size, cell_size, epsilon = epsilon)
-pix_mc = mutual_coherence_matrix_mod(small_img_arr_gray, num, num_cell_300, "pixel", epsilon = epsilon)
-gaus_mc = mutual_coherence_matrix_mod(small_img_arr_gray, num,num_cell_300, "gaussian", epsilon = epsilon)
-all_mc = [v1_mc, pix_mc, gaus_mc]
-fig = plt.figure()
-fig.suptitle(str(num) + " MC per Type, Epsilon = " + str(epsilon), fontsize=14)
-ax = fig.add_subplot()
-ax.boxplot(all_mc, tick_labels=['V1', 'pixel','Gaussian'])
-plt.show()
-plt.savefig("Less than Epsilon Mc")
+def main():
+    small_img_arr_gray = process_image(SMALL_IMG, color=False)
+
+    epsilon = 20
+    num = 5
+    #Plot Modded Mutual Coherence
+    v1_mc = mutual_coherence_matrix_mod(small_img_arr_gray, num, NUM_CELL_300,  "V1", BLOB_SIZE, CELL_SIZE, epsilon = epsilon)
+    pix_mc = mutual_coherence_matrix_mod(small_img_arr_gray, num, NUM_CELL_300, "pixel", epsilon = epsilon)
+    gaus_mc = mutual_coherence_matrix_mod(small_img_arr_gray, num, NUM_CELL_300, "gaussian", epsilon = epsilon)
+    all_mc = [v1_mc, pix_mc, gaus_mc]
+    fig = plt.figure()
+    fig.suptitle(str(num) + " MC per Type, Epsilon = " + str(epsilon), fontsize=14)
+    ax = fig.add_subplot()
+    ax.boxplot(all_mc, tick_labels=['V1', 'pixel','Gaussian'])
+    plt.show()
+    plt.savefig("Less than Epsilon Mc")
+
+
+if __name__ == "__main__":
+    main()
