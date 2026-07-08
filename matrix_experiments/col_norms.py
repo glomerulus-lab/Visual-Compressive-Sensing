@@ -58,33 +58,47 @@ def dot_product_matrix_mod(img_arr, obs_type, num_cell, cell_size = None, blob_s
     #x = design_matrix / col_norms
     return np.abs(M), col_norms
 
-blob_size = 2
-plt.figure()
-v1_dot, v1_norms = dot_product_matrix_mod(small_img_arr_gray, "V1", num_cell_300, cell_size, blob_size)
-#bins = np.linspace(0, 0.35,200)
-bins=200
-plt.hist(v1_dot.flatten(), bins, cumulative = False, density = True, label = "v1")
 
-pix_dot, pix_norms = dot_product_matrix_mod(small_img_arr_gray, "pixel", num_cell_300, cell_size, blob_size)
-plt.hist(pix_dot.flatten(), bins, cumulative = False, density = True, label = "pixel")
+# Whole-image analysis parameters (this script's own setup, not read from core.py)
+SMALL_IMG = "tree_part1.jpg"
+NUM_CELL_300 = 300
+CELL_SIZE = 7    # receptive field size (200;.001 like gaussian)
+BLOB_SIZE = 2
 
-gauss_dot, gauss_norms = dot_product_matrix_mod(small_img_arr_gray, "gaussian", num_cell_300, cell_size, blob_size)
-plt.hist(gauss_dot.flatten(), bins, cumulative = False, density = True, label = "gauss")
 
-plt.xlabel("Dot Product")
-plt.ylabel("Frequency")
-plt.legend()
-plt.yscale('log')
-plt.show()
-plt.savefig("Dot_Hist.svg") # saves a level above
+def main():
+    small_img_arr_gray = process_image(SMALL_IMG, color=False)
 
-plt.figure()
-plt.hist(v1_norms.flatten(), bins, cumulative = False, density = True, label = "v1")
-plt.hist(pix_norms.flatten(), bins, cumulative = False, density = True, label = "pixel")
-plt.hist(gauss_norms.flatten(), bins, cumulative = False, density = True, label = "gauss")
-plt.xlabel("Col Norm")
-plt.ylabel("Frequency")
-plt.legend()
-plt.yscale('log')
-plt.show()
-plt.savefig("Norms Hist")
+    plt.figure()
+    v1_dot, v1_norms = dot_product_matrix_mod(small_img_arr_gray, "V1", NUM_CELL_300, CELL_SIZE, BLOB_SIZE)
+    #bins = np.linspace(0, 0.35,200)
+    bins=200
+    plt.hist(v1_dot.flatten(), bins, cumulative = False, density = True, label = "v1")
+
+    pix_dot, pix_norms = dot_product_matrix_mod(small_img_arr_gray, "pixel", NUM_CELL_300, CELL_SIZE, BLOB_SIZE)
+    plt.hist(pix_dot.flatten(), bins, cumulative = False, density = True, label = "pixel")
+
+    gauss_dot, gauss_norms = dot_product_matrix_mod(small_img_arr_gray, "gaussian", NUM_CELL_300, CELL_SIZE, BLOB_SIZE)
+    plt.hist(gauss_dot.flatten(), bins, cumulative = False, density = True, label = "gauss")
+
+    plt.xlabel("Dot Product")
+    plt.ylabel("Frequency")
+    plt.legend()
+    plt.yscale('log')
+    plt.show()
+    plt.savefig("Dot_Hist.svg") # saves a level above
+
+    plt.figure()
+    plt.hist(v1_norms.flatten(), bins, cumulative = False, density = True, label = "v1")
+    plt.hist(pix_norms.flatten(), bins, cumulative = False, density = True, label = "pixel")
+    plt.hist(gauss_norms.flatten(), bins, cumulative = False, density = True, label = "gauss")
+    plt.xlabel("Col Norm")
+    plt.ylabel("Frequency")
+    plt.legend()
+    plt.yscale('log')
+    plt.show()
+    plt.savefig("Norms Hist")
+
+
+if __name__ == "__main__":
+    main()
