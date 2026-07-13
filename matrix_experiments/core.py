@@ -244,7 +244,8 @@ def sort_design_matrix(design_matrix):
     perm = np.argsort(ksum) 
     return design_matrix[:, perm]
 
-def high_freq_table(img_arr, obs_type, num_cell, cell_size = None, blob_size = None, center = None):
+def high_freq_table(img_arr, obs_type, num_cell, cell_size = None,
+                    blob_size = None, center = None):
     '''
     Creates a table identifying which DCT basis frequencies are where
 
@@ -916,82 +917,3 @@ def MC_box_plot_all_patches(patches, patch_idxs, filename="MC_all_patches.svg"):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig(filename, format="svg", dpi=300)
     plt.close()
-
-
-'''
-Below code was moved from above in the file to remove side-effects from importing core.py
-'''
-
-# small_img = "images/tree_part1.jpg"
-# big_img="peppers.png"
-# method = 'dct'
-# observation="pixel"
-# alpha=0.1
-# num_cell_100 = 100
-# num_cell_300 = 300
-# cell_size = 7    # receptive field size (200;.001 like gaussian)
-# blob_size = 2  # formerly sparse_freq            
-# num = 20
-
-# ## For wavelet variable
-# lv= 2
-# dwt_type= 'db2'
-
-# MC_box_plot(20, num_cell_100)
-# MC_box_plot(20, num_cell_300)
-
-# MC_box_plot(100, num_cell_100)
-# MC_box_plot(100, num_cell_300)
-
-# '''
-# dot product
-# '''
-# blob_size = 2
-
-# # dot product matrices
-# v1_dot = dot_product_matrix(small_img_arr_gray, "V1", num_cell_300, cell_size, blob_size)
-# pix_dot = dot_product_matrix(small_img_arr_gray, "pixel", num_cell_300, cell_size, blob_size)
-# gauss_dot = dot_product_matrix(small_img_arr_gray, "gaussian", num_cell_300, cell_size, blob_size)
-
-# # side by side plot
-# fig, axs = plt.subplots(1, 3, figsize=(18, 6))
-# for ax, mat, title in zip(axs, [v1_dot, pix_dot, gauss_dot], ["V1", "Pixel", "Gaussian"]):
-#     im = ax.imshow(mat, cmap='viridis')
-#     ax.set_title(f"{title} Dot Product Matrix")
-#     ax.set_xlabel("Column Index")
-#     ax.set_ylabel("Column Index")
-
-# # one colorbar for all heatmaps
-# fig.colorbar(im, ax=axs.ravel().tolist(), shrink=0.6, label="Dot Product Value")
-# plt.suptitle("Dot Products", fontsize=15, y=0.98, x = 0.98)
-# # plt.savefig("Dot_Product_Heatmaps.svg", dpi=300)
-
-# # PATCHES CODE -----------------------------------------------------------------------------------
-
-# NUM_CELL = 256
-# NUM_MC_RUNS = 100
-
-# img = process_image("barbara.bmp", color=False)
-# patches = extract_patches(img, PATCH_SIZE)
-
-
-
-# plt.ion()
-
-# #Load Images:
-# # Represent image as numpy array to make it easier to process
-# small_img_arr = process_image(small_img, color=True)
-# small_img_arr_gray = process_image(small_img, False) #change from 'gray' to False
-# big_img_arr = process_image(big_img, color=True)
-# big_img_arr_gray = process_image(big_img, False) #change from 'gray' to False
-
-    
-# TODO: all patches
-# dot_product_histograms_all_patches(patches, PATCH_IDXS, 256)
-# plot_dot_products_all_patches(patches, PATCH_IDXS, 256)
-# MC_box_plot_all_patches(patches, PATCH_IDXS)
-
-# TODO: single patch
-# dot_product_histogram_for_patch(58, bins=50)
-# plot_dot_products_for_patch(58)
-# MC_box_plot_for_patch(58)
