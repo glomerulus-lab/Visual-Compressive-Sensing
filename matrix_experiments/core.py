@@ -21,12 +21,12 @@ Current Thoughts:
     Hypothesis (Hyp): V1 observations end up with areas with values 0 and close to 0, so
         when we create the dot product matricies and normalize them, the dot products are being
         divided by something close to 0, 'blowing them up'
-    Specturm
+    Spectrum
         Look at the SVD of design matrix
 
 W = measurement_matrix
 U = basis_matrix
-theta = A = design_matrix
+A = design_matrix
 '''
 
 
@@ -38,8 +38,15 @@ def generate_design_matrix(measurement_matrix):
     Parameters
     ----------
 
-    measurement_matrix: array_like
-        Lists of weighted data
+    measurement_matrix : array_like
+        Weights on pixels that generate observations.
+
+    Returns
+    -------
+
+    design_matrix : numpy_array
+        (num_cell, n * m) matrix, the DCT of each measurement row
+        flattened, ready to pass into the coherence functions.
     '''
 
     num_cell, n, m = measurement_matrix.shape
@@ -54,8 +61,18 @@ def compute_mutual_coherence(design_matrix) :
     Parameters
     ----------
 
-    design_matrix: array_like
+    design_matrix : array_like
         matrix with more than one column
+
+    Returns
+    -------
+
+    float
+        The mutual coherence: the largest absolute normalized
+        off-diagonal dot product between columns of design_matrix.
+
+    Notes
+    -----
 
     The how:
     1. normalize columns of A (divide each by its norm):
@@ -69,7 +86,6 @@ def compute_mutual_coherence(design_matrix) :
             create array dot = dot products between col x with every column after it
             add dot to total_dot
         return max(total_dot)
-
     '''
     col_norms = np.linalg.norm(design_matrix, axis=0)
     x = design_matrix / col_norms 
@@ -84,26 +100,36 @@ def dot_product_matrix(img_arr, obs_type, num_cell, cell_size = None, blob_size 
     Parameters
     ----------
 
-    img_arr: numpy_array
+    img_arr : numpy_array
         (n, m) shape image containing array of pixels.
 
-    obs_type: String
-        Observation technique that are going to be used to 
+    obs_type : String
+        Observation technique that are going to be used to
         collect sample for reconstruction. Default set up to 'pixel'
         Supported observation : ['pixel', 'gaussian', 'V1'].
 
     num_cell : int
-        Number of blobs that will be used to be 
+        Number of blobs that will be used to be
         determining which pixels to grab and use.
 
-    cell_size : int
-        Determines field size of opened and closed blob of data. 
+    cell_size : int, optional
+        Determines field size of opened and closed blob of data.
         Affect the data training.
-        
-    blob_size : int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. 
+
+    blob_size : int, optional
+        Determines filed frequency on how frequently
+        opened and closed area would appear.
         Affect the data training.
+
+    center : array_like, optional
+        Center of the receptive fields for V1 observations.
+
+    Returns
+    -------
+
+    numpy_array
+        (num_cell, num_cell) matrix of absolute normalized dot products
+        between columns of the design matrix, with the diagonal zeroed.
     '''
 
     if obs_type == 'V1':
@@ -129,37 +155,49 @@ def mutual_coherence_matrix(img_arr, n, num_cell, obs_type, cell_size = None, bl
     Parameters
     ----------
 
-    img_arr: array_like
+    img_arr : array_like
         I(n, m) shape image containing array of pixels
 
-    n: int 
-        how many MC should be collected from one image, 
+    n : int
+        how many MC should be collected from one image,
         with purpose of averaging and comparing
 
     num_cell : int
-        Number of blobs that will be used to be 
+        Number of blobs that will be used to be
         determining which pixels to grab and use.
 
-    obs_type: String
-        Observation technique that are going to be used to 
+    obs_type : String
+        Observation technique that are going to be used to
         collect sample for reconstruction. Default set up to 'pixel'
-        Supported observation : ['pixel', 'gaussian', 'V1']. 
+        Supported observation : ['pixel', 'gaussian', 'V1'].
 
-    cell_size : int
-        Determines field size of opened and closed blob of data. 
+    cell_size : int, optional
+        Determines field size of opened and closed blob of data.
         Affect the data training.
-        
-    blob_size : int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. 
+
+    blob_size : int, optional
+        Determines filed frequency on how frequently
+        opened and closed area would appear.
         Affect the data training.
-    
+
+    center : array_like, optional
+        Center of the receptive fields for V1 observations.
+
+    Returns
+    -------
+
+    numpy_array
+        (n,) array holding one mutual coherence value per run,
+        for averaging and comparison across observation types.
+
+    Notes
+    -----
+
     The how:
     1. Create array M, will be our final list of MCs
     2. for n times, generate design_matrix and compute mutual coherence depending on ovserbation type
         add each MC value to M
     3. return M - to be plotted
-    
     '''
 
     M = np.zeros(n)
@@ -182,7 +220,20 @@ def mutual_coherence_matrix(img_arr, n, num_cell, obs_type, cell_size = None, bl
 
 def sort_design_matrix(design_matrix):
     '''
-    Sorts design_matrix frequencies (?)
+    Sorts design_matrix by frequencies
+
+    Parameters
+    ----------
+
+    design_matrix : array_like
+        (num_cell, n * m) design matrix whose columns index DCT frequencies.
+
+    Returns
+    -------
+
+    numpy_array
+        The design_matrix with its columns reordered by ascending
+        radial frequency (kx**2 + ky**2).
     '''
 
     arr = np.arange(30)
@@ -200,26 +251,38 @@ def high_freq_table(img_arr, obs_type, num_cell, cell_size = None, blob_size = N
     Parameters
     ----------
 
-    img_arr:
+    img_arr : array_like
         (n, m) shape image containing array of pixels
 
-    obs_type: String
-        Observation technique that are going to be used to 
+    obs_type : String
+        Observation technique that are going to be used to
         collect sample for reconstruction. Default set up to 'pixel'
         Supported observation : ['pixel', 'gaussian', 'V1'].
 
     num_cell : int
-        Number of blobs that will be used to be 
+        Number of blobs that will be used to be
         determining which pixels to grab and use.
 
-    cell_size : int
-        Determines field size of opened and closed blob of data. 
+    cell_size : int, optional
+        Determines field size of opened and closed blob of data.
         Affect the data training.
-        
-    blob_size : int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. 
+
+    blob_size : int, optional
+        Determines filed frequency on how frequently
+        opened and closed area would appear.
         Affect the data training.
+
+    center : array_like, optional
+        Center of the receptive fields for V1 observations.
+
+    Returns
+    -------
+
+    pandas.DataFrame
+        Rows sorted by descending mutual coherence, with columns
+        i, j (column indices into the dot product matrix),
+        (kx_i, ky_i), (kx_j, ky_j) (their DCT frequency coordinates),
+        and MC (the coherence value).
     '''
 
     M = dot_vec = dot_product_matrix(img_arr, obs_type, num_cell, cell_size, blob_size, center)
@@ -261,21 +324,27 @@ def generate_coeff_vector(img_arr, num_cell, cell_size, blob_size):
     Parameters
     ----------
 
-    img_arr:
+    img_arr : array_like
         (n, m) shape image containing array of pixels
 
     num_cell : int
-        Number of blobs that will be used to be 
+        Number of blobs that will be used to be
         determining which pixels to grab and use.
 
     cell_size : int
-        Determines field size of opened and closed blob of data. 
+        Determines field size of opened and closed blob of data.
         Affect the data training.
-        
+
     blob_size : int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. 
+        Determines filed frequency on how frequently
+        opened and closed area would appear.
         Affect the data training.
+
+    Returns
+    -------
+
+    numpy_array
+        (n, m) array of 2D DCT coefficients of img_arr.
     '''
 
     n, m = img_arr.shape
@@ -290,35 +359,45 @@ def generate_ctDc(img_arr, obs_type, num_cell, norm = 2, diagonal = 0, cell_size
     Parameters
     ----------
 
-    img_arr: array_like
+    img_arr : array_like
         (n, m) shape image containing array of pixels
 
-    obs_type: String
-        Observation technique that are going to be used to 
+    obs_type : String
+        Observation technique that are going to be used to
         collect sample for reconstruction. Default set up to 'pixel'
         Supported observation : ['pixel', 'gaussian', 'V1'].
 
     num_cell : int
-        Number of blobs that will be used to be 
+        Number of blobs that will be used to be
         determining which pixels to grab and use.
-    
-    norm: int
+
+    norm : int, optional
         np.linalg.norm(coeffs) ** norm
         norm type to divide by
 
-    diagonal: int
+    diagonal : int, optional
         Number to replace diagonal values with in dot vector
         0: will return metric without altering diagonal
         diagonal >0: will return metric having replaced dot_vec diagonal
 
-    cell_size : int
-        Determines field size of opened and closed blob of data. 
+    cell_size : int, optional
+        Determines field size of opened and closed blob of data.
         Affect the data training.
-        
-    blob_size : int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. 
+
+    blob_size : int, optional
+        Determines filed frequency on how frequently
+        opened and closed area would appear.
         Affect the data training.
+
+    center : array_like, optional
+        Center of the receptive fields for V1 observations.
+
+    Returns
+    -------
+
+    float
+        The scalar metric coeffs.T @ dot_vec @ coeffs divided by
+        np.linalg.norm(coeffs) ** norm.
     '''
     coeffs= generate_coeff_vector(img_arr,num_cell,cell_size,blob_size).flatten()
     dot_vec = dot_product_matrix(img_arr, obs_type, num_cell, cell_size, blob_size, center)
@@ -339,35 +418,40 @@ def generate_Dc(img_arr, obs_type, num_cell, norm = 1, cell_size = None, blob_si
     Parameters
     ----------
 
-    img_arr: array_like
+    img_arr : array_like
         I(n, m) shape image containing array of pixels
 
-    observation: String
-        Observation technique that are going to be used to 
+    obs_type : String
+        Observation technique that are going to be used to
         collect sample for reconstruction. Default set up to 'pixel'
         Supported observation : ['pixel', 'gaussian', 'V1'].
 
     num_cell : int
-        Number of blobs that will be used to be 
+        Number of blobs that will be used to be
         determining which pixels to grab and use.
-    
-    norm: int
+
+    norm : int, optional
         np.linalg.norm(coeffs) ** norm
         norm type to divide by
 
-    diagonal: int
-        Number to replace diagonal values with in dot vector
-        0: will return metric without altering diagonal
-        diagonal >0: will return metric having replaced dot_vec diagonal
+    cell_size : int, optional
+        Determines field size of opened and closed blob of data.
+        Affect the data training.
 
-    cell_size : int
-        Determines field size of opened and closed blob of data. 
+    blob_size : int, optional
+        Determines filed frequency on how frequently
+        opened and closed area would appear.
         Affect the data training.
-        
-    blob_size : int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. 
-        Affect the data training.
+
+    center : array_like, optional
+        Center of the receptive fields for V1 observations.
+
+    Returns
+    -------
+
+    float
+        The norm of dot_vec @ coeffs: the infinity norm when norm <= 0,
+        otherwise the given p-norm.
     '''
 
     coeffs= generate_coeff_vector(img_arr,num_cell,cell_size,blob_size).flatten()
@@ -382,6 +466,23 @@ def generate_Dc(img_arr, obs_type, num_cell, norm = 1, cell_size = None, blob_si
 def MC_box_plot(num_runs, num_cell):
     '''
     mutual coherence (MC) plot
+
+    Parameters
+    ----------
+
+    num_runs : int
+        Number of mutual coherence samples to draw per observation type.
+
+    num_cell : int
+        Number of blobs that will be used to be
+        determining which pixels to grab and use.
+
+    Returns
+    -------
+
+    None
+        Saves a box plot comparing V1, pixel, and gaussian mutual
+        coherence to MC_box_plot_<num_runs>_runs_<num_cell>_blobs.svg.
     '''
     # mutual coherence for each observation type
     mc_v1 = mutual_coherence_matrix(small_img_arr_gray, n=num_runs, num_cell=num_cell, obs_type='V1', cell_size=cell_size, blob_size=blob_size)
@@ -401,17 +502,23 @@ def design_matrix_from_patch(patch, obs_type, num_cell):
     """
     design matric per patch
 
-    Args:
-        patch (ndarray): 
-            2D image patch.
-        obs_type (str): 
-            Measurement strategy — ['V1', 'pixel', or 'gaussian]
-        num_cell (int): 
-            Number of observations to generate.
+    Parameters
+    ----------
 
-    Returns:
-        ndarray: 
-            Design matrix
+    patch : ndarray
+        2D image patch.
+
+    obs_type : str
+        Measurement strategy — ['V1', 'pixel', or 'gaussian'].
+
+    num_cell : int
+        Number of observations to generate.
+
+    Returns
+    -------
+
+    ndarray or None
+        Design matrix, or None if obs_type is unrecognized.
     """
     if obs_type == "V1":
         W, _ = generate_V1_observation(patch, num_cell, CELL_SIZE, BLOB_SIZE, None)
@@ -429,18 +536,26 @@ def mutual_coherence_runs(patch, obs_type, num_cell, n_runs):
     Repeatedly compute mutual coherence for a single patch to build a distribution
     over the randomness in the measurement process.
 
-    Args:
-        patch (ndarray): 
-            2D image patch.
-        obs_type (str): 
-            Measurement strategy — ['V1', 'pixel', or 'gaussian'].
-        num_cell (int): 
-            Number of observations per run.
-        n_runs (int): 
-            Number of independent MC samples to collect.
+    Parameters
+    ----------
 
-    Returns:
-        ndarray: Array of shape (n_runs,) containing one mutual coherence value per run.
+    patch : ndarray
+        2D image patch.
+
+    obs_type : str
+        Measurement strategy — ['V1', 'pixel', or 'gaussian'].
+
+    num_cell : int
+        Number of observations per run.
+
+    n_runs : int
+        Number of independent MC samples to collect.
+
+    Returns
+    -------
+
+    ndarray
+        Array of shape (n_runs,) containing one mutual coherence value per run.
     """
     M = np.zeros(n_runs)
     for i in range(n_runs):
@@ -454,8 +569,17 @@ def MC_box_plot_for_patch(patch_idx):
     Plot a box plot comparing the mutual coherence distributions of V1, Pixel, and
     Gaussian measurements for a single patch, over NUM_MC_RUNS repeated samples.
 
-    Args:
-        patch_idx (int): Index into the global 'patches' list.
+    Parameters
+    ----------
+
+    patch_idx : int
+        Index into the global 'patches' list.
+
+    Returns
+    -------
+
+    None
+        Saves the box plot to MC_patch_<patch_idx>.svg and shows it.
     """
     patch = patches[patch_idx]
 
@@ -475,33 +599,53 @@ def MC_box_plot_for_patch(patch_idx):
 
 def dot_product_matrix_from_patch(patch, obs_type, num_cell):
     """
-    dot products for each patch
+    Normalized absolute dot-product matrix used in mutual coherence.
 
-    Args:
-        patch (ndarray): 
-            2D image patch.
-        obs_type (str): 
-            Measurement strategy — one of 'V1', 'pixel', or 'gaussian'.
-        num_cell (int): 
-            Number of observations to generate.
+    The columns of the design matrix are normalized to unit vectors,
+    then their outer product is computed, the diagonal (=1) is set to 0,
+    and we return the absolute value.
 
-    Returns:
-        ndarray: Dot products.
+    Parameters
+    ----------
+
+    patch : ndarray
+        2D image patch.
+
+    obs_type : str
+        Measurement strategy — one of 'V1', 'pixel', or 'gaussian'.
+
+    num_cell : int
+        Number of observations to generate.
+
+    Returns
+    -------
+
+    ndarray
+        Dot product matrix.
     """
     A = design_matrix_from_patch(patch, obs_type, num_cell)
     col_norms = np.linalg.norm(A, axis=0)
     A_hat = A / col_norms
-    G = A_hat.T @ A_hat
-    np.fill_diagonal(G, 0)
-    return np.abs(G)
+    M = A_hat.T @ A_hat
+    np.fill_diagonal(M, 0)
+    return np.abs(M)
 
 
 def plot_dot_products_for_patch(patch_idx):
     """
     Plot dot products per patch.
 
-    Args:
-        patch_idx (int): Index into the 'patches' list.
+    Parameters
+    ----------
+
+    patch_idx : int
+        Index into the 'patches' list.
+
+    Returns
+    -------
+
+    None
+        Saves the heatmaps to DotProducts_patch_<patch_idx>.svg and shows them.
     """
     patch = patches[patch_idx]
 
@@ -530,11 +674,20 @@ def dot_product_histogram_for_patch(patch_idx, bins=50):
     """
     Dot product histograms
 
-    Args:
-        patch_idx (int): 
-            Index into the global 'patches' list.
-        bins (int): 
-            Number of histogram bins. Default 50.
+    Parameters
+    ----------
+
+    patch_idx : int
+        Index into the global 'patches' list.
+
+    bins : int, optional
+        Number of histogram bins. Default 50.
+
+    Returns
+    -------
+
+    None
+        Saves the histogram to DotProductHist_patch_<patch_idx>.svg and shows it.
     """
     patch = patches[patch_idx]
     colors = ["#2196F3", "#FF6F00", "#43A047"]  # blue, amber, green
@@ -565,19 +718,32 @@ def dot_product_histogram_for_patch(patch_idx, bins=50):
 
 def dot_product_histograms_all_patches(patches, patch_idxs, num_cell, bins=50, filename="DotProductHist_all_patches.svg"):
     """
-    Dot product historgrams for all patches
+    Dot product historgrams for all patches.
 
-    Args:
-        patches (list[ndarray]): 
-            Full list of extracted image patches.
-        patch_idxs (list[int]): 
-            Patch indices to include.
-        num_cell (int): 
-            Number of observations per patch.
-        bins (int): 
-            Number of histogram bins. Default 50.
-        filename (str): Output path for the saved SVG. Default
-            "DotProductHist_all_patches.svg".
+    Parameters
+    ----------
+
+    patches : list[ndarray]
+        Full list of extracted image patches.
+
+    patch_idxs : list[int]
+        Patch indices to include.
+
+    num_cell : int
+        Number of observations per patch.
+
+    bins : int, optional
+        Number of histogram bins. Default 50.
+
+    filename : str, optional
+        Output path for the saved SVG. Default
+        "DotProductHist_all_patches.svg".
+
+    Returns
+    -------
+
+    None
+        Saves the grid of histograms to `filename`.
     """
     obs_types = ["V1", "pixel", "gaussian"]
     labels    = ["V1", "Pixel", "Gaussian"]
@@ -629,16 +795,27 @@ def plot_dot_products_all_patches(patches, patch_idxs, num_cell, filename="DotPr
     """
     Dot products for all patches.
 
-    Args:
-        patches (list[ndarray]): 
-            Full list of extracted image patches.
-        patch_idxs (list[int]): 
-            Patch indices to include as rows.
-        num_cell (int): 
-            Number of observations per patch.
-        filename (str): 
-            Output path for the saved SVG. Default
-            "DotProducts_all_patches.svg".
+    Parameters
+    ----------
+
+    patches : list[ndarray]
+        Full list of extracted image patches.
+
+    patch_idxs : list[int]
+        Patch indices to include as rows.
+
+    num_cell : int
+        Number of observations per patch.
+
+    filename : str, optional
+        Output path for the saved SVG. Default
+        "DotProducts_all_patches.svg".
+
+    Returns
+    -------
+
+    None
+        Saves the grid of dot product heatmaps to `filename`.
     """
     from mpl_toolkits.axes_grid1 import make_axes_locatable # for color bar
 
@@ -684,13 +861,23 @@ def MC_box_plot_all_patches(patches, patch_idxs, filename="MC_all_patches.svg"):
     """
     MC box plot for all patches.
 
-    Args:
-        patches (list[ndarray]): 
-            Full list of extracted image patches.
-        patch_idxs (list[int]): 
-            Patch indices to include.
-        filename (str): 
-            Output path for the saved SVG. Default "MC_all_patches.svg".
+    Parameters
+    ----------
+
+    patches : list[ndarray]
+        Full list of extracted image patches.
+
+    patch_idxs : list[int]
+        Patch indices to include.
+
+    filename : str, optional
+        Output path for the saved SVG. Default "MC_all_patches.svg".
+
+    Returns
+    -------
+
+    None
+        Saves the grid of mutual coherence box plots to `filename`.
     """
     n_patches = len(patch_idxs)
     n_cols = 2
