@@ -249,9 +249,9 @@ def main():
     # print("PC mse_V1:", mse_V1)
     # print("Pixel mse:", mean_pixel_error)
 
-    make_scatter(a_est_V1,   a_true_V1, "V1", "V1 vs True (300 samples)", "V1_vs_True_300_YlOrRd.png", alpha=0.5)
-    make_scatter(a_est_pix,  a_true_pix, "Pixel", "Pixel vs True (300 samples)", "Pixel_vs_True_300_YlOrRd.png")
-    make_scatter(a_est_gauss, a_true_gauss, "Gaussian", "Gaussian vs True (300 samples)", "Gaussian_vs_True_300_YlOrRd.png")
+    make_scatter(a_est_V1,   a_true_V1, "V1", "V1 vs True (300 samples)", "figures/V1_vs_True_300_YlOrRd.png", alpha=0.5)
+    make_scatter(a_est_pix,  a_true_pix, "Pixel", "Pixel vs True (300 samples)", "figures/Pixel_vs_True_300_YlOrRd.png")
+    make_scatter(a_est_gauss, a_true_gauss, "Gaussian", "Gaussian vs True (300 samples)", "figures/Gaussian_vs_True_300_YlOrRd.png")
 
     # Call the function
     make_combined_scatter(
@@ -315,11 +315,11 @@ def main():
     plt.xlabel("Index")
     plt.ylabel("Squared Error")
 
-    plt.savefig("smoothed_error_plot_300.png", bbox_inches='tight')
+    plt.savefig("figures/smoothed_error_plot_300.png", bbox_inches='tight')
 
     import matplotlib.image as mpimg
-    img1 = mpimg.imread("smoothed_error_plot_300.png")
-    img2 = mpimg.imread("smoothed_error_plot_300.png")
+    img1 = mpimg.imread("figures/smoothed_error_plot_300.png")
+    img2 = mpimg.imread("figures/smoothed_error_plot_300.png")
 
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))  # adjust size as needed
 

@@ -31,7 +31,7 @@ def main():
     V1_W_300_fixedCenter, V1_y_300_fixedCenter = generate_V1_observation(small_img_arr_gray, NUM_CELL_300, CELL_SIZE, BLOB_SIZE, (15,15))
     V1_W_300_randCenter, V1_y_300_randCenter = generate_V1_observation(small_img_arr_gray, NUM_CELL_300, CELL_SIZE, BLOB_SIZE, None)
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (10, 10))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (10, 5))
 
     fig.suptitle("V1 Grascaled Reconstruction")
     ## Reconstruction with 100 number of cells grayscaled
@@ -44,7 +44,7 @@ def main():
     ax2.imshow(reconst_gray_300_randCenter, 'gray')
     ax2.set_title("{num_cell} number of cells".format(num_cell = NUM_CELL_300))
     ax2.axis("off")
-    plt.subplots_adjust(top=1.35)
+    #plt.subplots_adjust(top=1.35)
     plt.show()
 
 

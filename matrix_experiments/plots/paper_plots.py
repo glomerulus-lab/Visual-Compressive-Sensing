@@ -178,11 +178,6 @@ def run_selected_patches(patches, patch_idxs):
 
     return results
 
-barbara = process_image("barbara.bmp", color=False)
-patches = extract_patches(barbara, PATCH_SIZE)
-# show_patches_grid(patches)
-results = run_selected_patches(patches, PATCH_IDXS)
-
 def pc_per_method(results, num_obs, patch_idx):
     """
     Scatter plot of estimated principal component magnitudes by rank for each
@@ -518,6 +513,10 @@ def coeff_vectors_cdf_all_patches(results, patch_idxs, filename):
     plt.savefig(filename, format="svg")
     plt.close()
 
+barbara = process_image("barbara.bmp", color=False)
+patches = extract_patches(barbara, PATCH_SIZE)
+# show_patches_grid(patches)
+results = run_selected_patches(patches, PATCH_IDXS)
 
 # TODO: run for single patch results
 # for patch_idx, patch_results in results.items():
