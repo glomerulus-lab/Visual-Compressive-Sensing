@@ -18,8 +18,8 @@ here imports `src` absolutely and uses single-dot relative imports to reach
 its siblings, so scripts must be run as modules from the repo root, e.g.:
 
 ```
-python -m matrix_experiments.metrics
-python -m matrix_experiments.plots.paper_aligned_plots
+python -m matrix_experiments.plots.plot_metrics
+python -m matrix_experiments.plots.paper_plots
 ```
 
 ## Shared library (`core.py` + `plots/`)
@@ -49,9 +49,12 @@ from (`from .core import *`, or `from ..core import *` for files inside
 
 ## Single-image analysis scripts
 
-These operate on the small, fixed 30×30 grayscale image loaded by
-`core.py` (`small_img_arr_gray`, from `images/tree_part1.jpg`) at
-`num_cell_100`/`num_cell_300` (100/300 observations).
+These operate on the small, fixed 30×30 grayscale image
+`images/tree_part1.jpg` at 100/300 observations. Each script now loads the
+image itself via `process_image("tree_part1.jpg", color=False)` and defines
+its own `SMALL_IMG`/`NUM_CELL_300`/`CELL_SIZE`/`BLOB_SIZE` constants inside
+`main()` — `core.py` no longer exposes the image or these constants as
+module-level globals.
 
 - **`SVD_coeffs.py`** — a more ad hoc, script-style version of the same
   analysis at 300 observations only: compares true DCT coefficients against
@@ -71,10 +74,6 @@ These operate on the small, fixed 30×30 grayscale image loaded by
   matrix entry back to its `(kx, ky)` frequency pair and coherence value,
   to look for a relationship between low-coefficient frequencies and high
   dot products. Marked `Abandoned` in its own docstring.
-- **`metrics.py`** — uses `core.generate_ctDc`/`generate_Dc` to boxplot
-  coefficient-weighted dot-product metrics (`cᵀDc` with/without the
-  diagonal replaced, `Dc` under the 1-norm and 2-norm) across V1/Pixel/
-  Gaussian.
 - **`col_norms.py`** — `dot_product_matrix_mod` is a copy of `core`'s
   `dot_product_matrix` that also returns/plots the column norms of the
   design matrix, to test the hypothesis that V1's poor mutual coherence
@@ -102,7 +101,7 @@ These operate on the small, fixed 30×30 grayscale image loaded by
   - `show_patches_grid(patches, cols=16)` — renders a grid of patches and
     saves it to `grid_patches.svg`.
 - **`plots/util.py`** — plotting helpers shared by `pc_plots.py` (whole-image)
-  and `paper_aligned_plots.py` (per-patch): `pc_scatter_plots`,
+  and `paper_plots.py` (per-patch): `pc_scatter_plots`,
   `plot_smoothed_error`, `cumsum_err`, `compare_smoothed_errors`,
   `plot_first_pc`, `plot_top_pcs`, `coeff_vectors_hist`, `coeff_vectors_cdf`.
   Each takes an optional `patch_idx` (default `None`) that adds patch
@@ -115,6 +114,11 @@ Works with full images or single patches
 - **`plots/plot_coeffs.py`** — plots true vs. estimated DCT coefficients
   (log-scale) for V1, Pixel, and Gaussian reconstructions at 300 cells. It
   operates on the whole small image (not on patches).
+- **`plots/plot_metrics.py`** — uses `core.generate_ctDc`/`generate_Dc` to
+  boxplot coefficient-weighted dot-product metrics (`cᵀDc` with/without the
+  diagonal replaced, `Dc` under the 1-norm and 2-norm) across V1/Pixel/
+  Gaussian, on the whole small image. (Formerly `matrix_experiments/metrics.py`;
+  it now loads its own image and constants rather than reading `core.py` globals.)
 - **`plots/pc_plots.py`** — `compute_results(num_obs)` builds, for V1/Pixel/
   Gaussian, the design matrix, its SVD, a LASSO reconstruction, and the
   estimated vs. true coefficients projected onto the design matrix's
@@ -123,7 +127,7 @@ Works with full images or single patches
   `plot_first_pc`, `plot_top_pcs`, `coeff_vectors_hist`, `coeff_vectors_cdf`)
   to turn that into PC scatter plots, per-component error curves, PCs
   rendered as images, and coefficient sparsity histograms/CDFs. Whole-image
-  counterpart to `plots/paper_aligned_plots.py`, which shares the same
+  counterpart to `plots/paper_plots.py`, which shares the same
   plotting helpers.
 
 ### Patch-based
@@ -131,7 +135,7 @@ These tile `images/barbara.bmp` into 32×32 patches via `extract_patches`
 and `exp_constants.PATCH_SIZE`/`PATCH_IDXS`, and repeat the single-image
 analyses per patch.
 
-- **`plots/paper_aligned_plots.py`** — the patch-based counterpart to
+- **`plots/paper_plots.py`** — the patch-based counterpart to
   `pc_plots.py`, and the most complete/current module in this directory
   (its name suggests it's what generates figures actually used in the
   paper). `compute_patch_results`/`get_results`/`run_selected_patches`
@@ -154,11 +158,11 @@ analyses per patch.
   `mutual_coherence_matrix`). Because a module-level `def` always wins over
   a preceding `from .core import *`, these files use their *own* versions,
   not `core.py`'s, despite the wildcard import.
-- `pc_plots.py` and `plots/paper_aligned_plots.py` used to independently
+- `pc_plots.py` and `plots/paper_plots.py` used to independently
   define several identically-named functions (`pc_scatter_plots`,
   `plot_top_pcs`, `coeff_vectors_hist`, `coeff_vectors_cdf`, `plot_first_pc`,
   `compare_smoothed_errors`, `plot_smoothed_error`) with subtly different
   behavior. These are now consolidated in `plots/util.py`; `pc_plots.py`'s
   histogram/CDF output changed slightly as a result (percentile-based bins
-  and log-scaled axes, matching what `paper_aligned_plots.py` already did,
+  and log-scaled axes, matching what `paper_plots.py` already did,
   instead of `pc_plots.py`'s old max-value bins and linear axes).
