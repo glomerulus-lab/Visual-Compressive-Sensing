@@ -7,7 +7,7 @@ from structured_random_features.src.models.weights import V1_weights
 from scipy import fftpack as fft
 import pywt
 from pywt import wavedecn
-from sklearn.linear_model import Lasso
+from sklearn.linear_model import Lasso, Ridge
 
 import warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -186,7 +186,7 @@ def error_calculation(img_arr, reconst):
     return error
 
 # Reconstruction (Current Methods: Fourier Base Transform, Wavelet Transform)
-def fourier_reconstruct(W, y, alpha, sample_sz, n, m, fit_intercept) :
+def fourier_reconstruct(W, y, alpha, sample_sz, n, m, fit_intercept, algorithm='lasso'):
     ''' 
     Reconstruct signals through cosine transform.
     
@@ -230,12 +230,19 @@ def fourier_reconstruct(W, y, alpha, sample_sz, n, m, fit_intercept) :
     
     theta = theta.reshape(sample_sz, n * m)
     #print(theta.shape)
-    ## Initialize Lasso and Fit data
-    mini = Lasso(alpha = alpha, fit_intercept = fit_intercept)
-    mini.fit(theta, y)
-    ## Retrieve sparse vector s
-    s = mini.coef_
-    #    print(s.shape)
+    if algorithm == 'lasso':
+        ## Initialize Lasso and Fit data
+        mini = Lasso(alpha = alpha, fit_intercept = fit_intercept)
+        mini.fit(theta, y)
+        ## Retrieve sparse vector s
+        s = mini.coef_
+    elif algorithm == 'ridge':
+        mini = Ridge(alpha = alpha, fit_intercept = fit_intercept)
+        mini.fit(theta, y)
+        ## Retrieve sparse vector s
+        s = mini.coef_
+    else:
+        raise Exception(f"invalid argument to reconstruct, algorithm = {algorithm}")
     img = fft.idctn(s.reshape(n, m), norm='ortho', axes=[0,1])
     return img
 
@@ -370,7 +377,7 @@ def generate_observations(img_arr, num_cell, observation, cell_size = None,
     return W, y
 
 def reconstruct(W, y, alpha = None, fit_intercept = False, method = 'dct',
-                lv = 4, dwt_type = 'db2'):
+                lv = 4, dwt_type = 'db2', algorithm='lasso'):
     ''' 
     Reconstruct gray-scaled image using sample data fitting into LASSO model.
     
@@ -418,7 +425,7 @@ def reconstruct(W, y, alpha = None, fit_intercept = False, method = 'dct',
         raise Exception("fit_intercept = True not implemented")
     
     if (method == 'dct') :
-        img = fourier_reconstruct(W, y, alpha, num_cell, n, m, fit_intercept)
+        img = fourier_reconstruct(W, y, alpha, num_cell, n, m, fit_intercept, algorithm=algorithm)
     elif (method == 'dwt') :
         img = wavelet_reconstruct(W, y, alpha, num_cell, n, m,
                                   fit_intercept, dwt_type, lv)

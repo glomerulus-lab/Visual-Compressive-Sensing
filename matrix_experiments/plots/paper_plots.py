@@ -19,7 +19,7 @@ PLOTS:
     - coefficient hists
 ''' 
 
-def compute_patch_results(patch, n, cell_size, blob_size, alpha):
+def compute_patch_results(patch, n, cell_size, blob_size, alpha, algorithm=ALG):
     """
     Get necessary data for plots.
 
@@ -43,9 +43,9 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha):
                 "Vh"            (ndarray): Right singular vectors (PCs) of the design matrix.
                 "reconstruction" (ndarray): Reconstructed patch from estimated coefficients.
                 "est_coeffs"    (ndarray): Estimated DCT coefficient vector.
-                "a_est"         (ndarray): Estimated coefficients projected onto PCs.
-                "a_true"        (ndarray): True coefficients projected onto PCs.
-                "error"         (ndarray): Per-component squared error (a_true - a_est)^2.
+                "p_est"         (ndarray): Estimated coefficients projected onto PCs.
+                "p_true"        (ndarray): True coefficients projected onto PCs.
+                "error"         (ndarray): Per-component squared error (p_true - p_est)^2.
     """
     # true coefs of theta
     coeffs_true = generate_coeff_vector(patch, n, cell_size, blob_size)
@@ -56,14 +56,14 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha):
     U_V1, S_V1, Vh_V1 = np.linalg.svd(theta_V1)
 
     # V1 - estimated coeffs
-    reconst_v1 = reconstruct(measurement_matrix_V1, V1_y, alpha)
+    reconst_v1 = reconstruct(measurement_matrix_V1, V1_y, alpha, algorithm=algorithm)
     coeffs_est_V1 = generate_coeff_vector(reconst_v1, n, cell_size, blob_size)
 
     # Project both true and estimated coefficients onto the V1 principal components
-    a_est_V1 = Vh_V1 @ coeffs_est_V1.flatten()
-    a_true_V1 = Vh_V1 @ coeffs_true.flatten()
+    p_est_V1 = Vh_V1 @ coeffs_est_V1.flatten()
+    p_true_V1 = Vh_V1 @ coeffs_true.flatten()
 
-    err_V1 = (a_true_V1 - a_est_V1) ** 2
+    err_V1 = (p_true_V1 - p_est_V1) ** 2
 
     # Pixel - SVD
     measurement_matrix_pix, pixel_y = generate_pixel_observation(patch, n)
@@ -71,14 +71,14 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha):
     U_pix, S_pix, Vh_pix = np.linalg.svd(theta_pix)
 
     # Pixel - estimated coeffs
-    reconst_pix = reconstruct(measurement_matrix_pix, pixel_y, alpha)
+    reconst_pix = reconstruct(measurement_matrix_pix, pixel_y, alpha, algorithm=algorithm)
     coeffs_est_pix = generate_coeff_vector(reconst_pix, n, cell_size, blob_size)
 
     # Project both true and estimated coefficients onto the Pixel principal components
-    a_est_pix = Vh_pix @ coeffs_est_pix.flatten()
-    a_true_pix = Vh_pix @ coeffs_true.flatten()
+    p_est_pix = Vh_pix @ coeffs_est_pix.flatten()
+    p_true_pix = Vh_pix @ coeffs_true.flatten()
 
-    err_pix = (a_true_pix - a_est_pix) ** 2
+    err_pix = (p_true_pix - p_est_pix) ** 2
 
     # Gauss - SVD
     measurement_matrix_gauss, gaussian_y = generate_gaussian_observation(patch, n)
@@ -86,14 +86,14 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha):
     U_gauss, S_gauss, Vh_gauss = np.linalg.svd(theta_gauss)
 
     # Gauss - estimated coeffs
-    reconst_gauss = reconstruct(measurement_matrix_gauss, gaussian_y, alpha)
+    reconst_gauss = reconstruct(measurement_matrix_gauss, gaussian_y, alpha, algorithm=algorithm)
     coeffs_est_gauss = generate_coeff_vector(reconst_gauss, n, cell_size, blob_size)
 
     # Project both true and estimated coefficients onto the Gaussian principal components
-    a_est_gauss = Vh_gauss @ coeffs_est_gauss.flatten()
-    a_true_gauss = Vh_gauss @ coeffs_true.flatten()
+    p_est_gauss = Vh_gauss @ coeffs_est_gauss.flatten()
+    p_true_gauss = Vh_gauss @ coeffs_true.flatten()
 
-    err_gauss = (a_true_gauss - a_est_gauss) ** 2
+    err_gauss = (p_true_gauss - p_est_gauss) ** 2
 
     return {
         "coeffs_true": coeffs_true,
@@ -104,8 +104,8 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha):
             "Vh": Vh_V1,
             "reconstruction": reconst_v1,
             "est_coeffs" : coeffs_est_V1,
-            "a_est": a_est_V1,
-            "a_true": a_true_V1,
+            "p_est": p_est_V1,
+            "p_true": p_true_V1,
             "error" : err_V1,
         },
         "Pixel": {
@@ -114,8 +114,8 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha):
             "Vh": Vh_pix,
             "reconstruction": reconst_pix,
             "est_coeffs" : coeffs_est_pix,
-            "a_est": a_est_pix,
-            "a_true": a_true_pix,
+            "p_est": p_est_pix,
+            "p_true": p_true_pix,
             "error" : err_pix,
         },
         "Gaussian": {
@@ -124,8 +124,8 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha):
             "Vh": Vh_gauss,
             "reconstruction": reconst_gauss,
             "est_coeffs" : coeffs_est_gauss,
-            "a_est": a_est_gauss,
-            "a_true": a_true_gauss,
+            "p_est": p_est_gauss,
+            "p_true": p_true_gauss,
             "error" : err_gauss,
         }
     }
@@ -178,7 +178,7 @@ def run_selected_patches(patches, patch_idxs):
 
     return results
 
-def pc_per_method(results, num_obs, patch_idx):
+def pc_per_method(results, num_obs, patch_idx, vector="est"):
     """
     Scatter plot of estimated principal component magnitudes by rank for each
     measurement method.
@@ -187,24 +187,31 @@ def pc_per_method(results, num_obs, patch_idx):
         results (dict): Nested results dict keyed by num_obs.
         num_obs (int): Observation count key used to index into 'results'.
         patch_idx (int): Patch index used for the plot title and output filename.
+        vector (str): "est" or "true", default = "est"
     """
     methods = ["V1", "Pixel", "Gaussian"]
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 6))
 
     for ax, method in zip(axes, methods):
-
-        components = np.abs(results[num_obs][method]["a_est"]) # TODO: Change this to "a_true" to get true pc plot (bumps)
+        if vector == "est":
+            components = np.abs(results[num_obs][method]["p_est"])
+            ylabel_str = "True Principal Component"
+        elif vector == "true":
+            components = np.abs(results[num_obs][method]["p_true"])
+            ylabel_str = "Estimated Principal Component"
+        else:
+            raise Exception(f"Invalid argument results = {results}")
         ax.scatter(range(len(components)), components, s=10, color='skyblue')
 
         ax.set_xlabel("Rank")
-        ax.set_ylabel("True Principal Component")
+        ax.set_ylabel(ylabel_str)
         ax.set_yscale('log')
-        ax.set_title(f"{method} True Principal Component")
+        ax.set_title(f"{method} {ylabel_str}")
 
     plt.suptitle(f"Principal Component - Patch {patch_idx}")
     plt.tight_layout()
-    plt.savefig(f"pc_per_method_patch_{patch_idx}.svg", dpi=300)
+    plt.savefig(f"pc_per_method_patch_{patch_idx}_{vector}.svg", dpi=300)
     plt.close()
 
 def plot_cdf_error(ax, err, label):
@@ -255,8 +262,8 @@ def pc_scatter_plots_all_patches(results, patch_idxs, filename, cmap='cool'):
     global_max = -np.inf
     for patch_idx in patch_idxs:
         for method in methods:
-            est = np.abs(results[patch_idx][method]["a_est"])
-            true = np.abs(results[patch_idx][method]["a_true"])
+            est = np.abs(results[patch_idx][method]["p_est"])
+            true = np.abs(results[patch_idx][method]["p_true"])
             combined = np.concatenate([est, true])
             combined = combined[combined > 0]
             global_min = min(global_min, combined.min())
@@ -267,8 +274,8 @@ def pc_scatter_plots_all_patches(results, patch_idxs, filename, cmap='cool'):
         for col, method in enumerate(methods):
             ax = axes[row, col]
 
-            est = results[patch_idx][method]["a_est"]
-            true = results[patch_idx][method]["a_true"]
+            est = results[patch_idx][method]["p_est"]
+            true = results[patch_idx][method]["p_true"]
 
             sc = ax.scatter(
                 np.abs(est), np.abs(true),
@@ -299,7 +306,7 @@ def pc_scatter_plots_all_patches(results, patch_idxs, filename, cmap='cool'):
     plt.savefig(filename, format="svg")
     plt.close()
     
-def pc_per_method_all_patches(results, patch_idxs, filename):
+def pc_per_method_all_patches(results, patch_idxs, filename, vector="est"):
     """
     Scatter plot of estimated PC magnitudes by rank for multiple patches and all three
     methods, arranged in a grid with patches as rows and methods as columns.
@@ -311,6 +318,8 @@ def pc_per_method_all_patches(results, patch_idxs, filename):
             Ordered list of patch indices to include as rows.
         filename (str): 
             Output path for the saved SVG file.
+        vector (str):
+            Optional, should be "est" or "true"
     """
     n_rows = len(patch_idxs)
     methods = ["V1", "Pixel", "Gaussian"]
@@ -325,7 +334,14 @@ def pc_per_method_all_patches(results, patch_idxs, filename):
         for col, method in enumerate(methods):
             ax = axes[row, col]
 
-            components = np.abs(results[patch_idx][method]["a_est"])
+            if vector == "est":
+                components = np.abs(results[patch_idx][method]["p_est"])
+                ylabel_str = "Estimated Principal Component"
+            elif vector == "true":
+                components = np.abs(results[patch_idx][method]["p_true"])
+                ylabel_str = "True Principal Component"
+            else:
+                raise Exception(f"Invalid argument results = {results}")
             ranks = np.arange(1, len(components) + 1)
 
             ax.scatter(ranks, components, s=10, color='skyblue')
@@ -334,13 +350,13 @@ def pc_per_method_all_patches(results, patch_idxs, filename):
             if row == 0:
                 ax.set_title(method, fontsize=18)
             if col == 0:
-                ax.set_ylabel(f"Patch {patch_idx}\n\n Estimated Principal Components", fontsize=18)
+                ax.set_ylabel(f"Patch {patch_idx}\n\n {ylabel_str}", fontsize=18)
             if row == n_rows - 1: 
                 ax.set_xlabel("Rank", fontsize=18)
             if col != 0:
                 ax.yaxis.set_visible(False)
 
-    fig.suptitle("Estimated Principal Components", fontsize=20, x=0.55)
+    fig.suptitle(ylabel_str, fontsize=20, x=0.55)
     plt.tight_layout(rect=[0, 0, 1, 0.97])
     plt.savefig(filename, format="svg")
     plt.close()
@@ -518,6 +534,54 @@ patches = extract_patches(barbara, PATCH_SIZE)
 # show_patches_grid(patches)
 results = run_selected_patches(patches, PATCH_IDXS)
 
+# Theory?
+#good_patch = 58
+bad_patch = 233#169
+
+pstar = results[bad_patch]['V1']['p_true']
+p = results[bad_patch]['V1']['p_est']
+err = results[bad_patch]['V1']['error']
+svs = results[bad_patch]['V1']['S']
+svs = np.pad(svs, (0, len(p) - len(svs)), 'constant', constant_values=(0,0))
+plt.semilogy(pstar,'.')
+
+U = results[bad_patch]['V1']['U']
+S = results[bad_patch]['V1']['S']
+Vh = results[bad_patch]['V1']['Vh']
+
+A = (U * S) @ Vh[:len(S),:]
+
+z = results[bad_patch]['V1']['est_coeffs'].flatten()
+zstar = results[bad_patch]['coeffs_true'].flatten()
+s = z.copy()
+s[np.abs(s) < 1e-12] = 0
+s[s > 0] = 1
+s[s < 0] = -1
+s = s
+Vh = results[bad_patch]['V1']['Vh']
+coeffs_nonzero = np.abs(s) > 0
+Vh_nonzero = Vh[:, coeffs_nonzero]
+Vh_zero = Vh[:, np.logical_not(coeffs_nonzero)]
+
+KKT_gap1 = ALPHA * s[coeffs_nonzero] - (A[:, coeffs_nonzero].T @ A @ (zstar - z)) / len(S)
+KKT_gap0 = ALPHA - np.abs((A[:, np.logical_not(coeffs_nonzero)].T @ A @ (zstar - z)) / len(S))
+
+KKT_pgap1 = ALPHA * s[coeffs_nonzero] - ((Vh_nonzero.T)[:, :len(S)] @ (S**2 * (pstar - p)[:len(S)])) / len(S)
+KKT_pgap0 = ALPHA - np.abs(((Vh_zero.T)[:, :len(S)] @ (S**2 * (pstar - p)[:len(S)]))) / len(S)
+
+assert np.allclose(KKT_gap1, KKT_pgap1)
+assert np.allclose(KKT_gap0, KKT_pgap0)
+
+R_eps = Vh_nonzero.T
+R_epsc = Vh_zero.T
+
+plt.semilogy(zstar ** 2)
+
+# R_eps @ Sigma @ U.T @ A_eps @ (zstar_eps - z_eps) = n lambda s_eps
+KKT_gap1 = ALPHA * s[coeffs_nonzero] - (A[:, coeffs_nonzero].T @ A @ (zstar - z)) / len(S)
+
+
+
 # TODO: run for single patch results
 # for patch_idx, patch_results in results.items():
 #     results = {256: patch_results}
@@ -532,8 +596,9 @@ results = run_selected_patches(patches, PATCH_IDXS)
 #     coeff_vectors_cdf(results, 256, patch_idx)
 
 # TODO: run for all patches
-# pc_scatter_plots_all_patches(results, PATCH_IDXS, "all_patches_pc_scatter.svg")
-# pc_per_method_all_patches(results, PATCH_IDXS,"all_patches_true_pc_per_method.svg")
-# error_all_patches(results, PATCH_IDXS, "all_patches_error_cumsum.svg")
-# coeff_vectors_hist_all_patches(results, PATCH_IDXS, "all_patches_coeffs_hist_full_y.svg" )
-# coeff_vectors_cdf_all_patches(results, PATCH_IDXS, "all_patches_coeffs_cdf_lim.svg")
+pc_scatter_plots_all_patches(results, PATCH_IDXS, "all_patches_pc_scatter.svg")
+pc_per_method_all_patches(results, PATCH_IDXS,"all_patches_true_pc_per_method.svg", vector="true")
+pc_per_method_all_patches(results, PATCH_IDXS,"all_patches_est_pc_per_method.svg", vector="est")
+error_all_patches(results, PATCH_IDXS, "all_patches_error_cumsum.svg")
+coeff_vectors_hist_all_patches(results, PATCH_IDXS, "all_patches_coeffs_hist_full_y.svg" )
+coeff_vectors_cdf_all_patches(results, PATCH_IDXS, "all_patches_coeffs_cdf_lim.svg")
