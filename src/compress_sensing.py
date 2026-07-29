@@ -7,7 +7,9 @@ from structured_random_features.src.models.weights import V1_weights
 from scipy import fftpack as fft
 import pywt
 from pywt import wavedecn
-from sklearn.linear_model import Lasso, Ridge
+from sklearn.linear_model import Lasso, Ridge, OrthogonalMatchingPursuit
+from spgl1 import spg_bp
+
 
 import warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -241,6 +243,12 @@ def fourier_reconstruct(W, y, alpha, sample_sz, n, m, fit_intercept, algorithm='
         mini.fit(theta, y)
         ## Retrieve sparse vector s
         s = mini.coef_
+    elif algorithm == 'omp':
+        mini = OrthogonalMatchingPursuit(tol=1e-6, fit_intercept=fit_intercept)
+        mini.fit(theta, y)
+        s = mini.coef_
+    elif algorithm == 'bp':
+        s, _, _, _ = spg_bp(theta, y.ravel(), iter_lim=20 * sample_sz)
     else:
         raise Exception(f"invalid argument to reconstruct, algorithm = {algorithm}")
     img = fft.idctn(s.reshape(n, m), norm='ortho', axes=[0,1])
