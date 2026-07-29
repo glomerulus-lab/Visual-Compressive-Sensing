@@ -345,6 +345,7 @@ def pc_per_method_all_patches(results, patch_idxs, filename, vector="est"):
             ranks = np.arange(1, len(components) + 1)
 
             ax.scatter(ranks, components, s=10, color='skyblue')
+            ax.vlines(N_OBS, *ax.get_ylim(), color='red', linestyle='--')
 
             ax.set_yscale('log')
             if row == 0:
@@ -402,6 +403,7 @@ def error_all_patches(results, patch_idxs, filename):
         # ax.set_xscale("log")
         # ax.set_yscale("log")
 
+        ax.vlines(N_OBS, *ax.get_ylim(), color='red', linestyle='--')
         ax.set_title(f"Patch {patch_idx}", fontsize=16)
 
         row = i // n_cols
@@ -578,7 +580,6 @@ R_epsc = Vh_zero.T
 plt.semilogy(zstar ** 2)
 
 # R_eps @ Sigma @ U.T @ A_eps @ (zstar_eps - z_eps) = n lambda s_eps
-KKT_gap1 = ALPHA * s[coeffs_nonzero] - (A[:, coeffs_nonzero].T @ A @ (zstar - z)) / len(S)
 
 
 
@@ -596,9 +597,9 @@ KKT_gap1 = ALPHA * s[coeffs_nonzero] - (A[:, coeffs_nonzero].T @ A @ (zstar - z)
 #     coeff_vectors_cdf(results, 256, patch_idx)
 
 # TODO: run for all patches
-pc_scatter_plots_all_patches(results, PATCH_IDXS, "all_patches_pc_scatter.svg")
-pc_per_method_all_patches(results, PATCH_IDXS,"all_patches_true_pc_per_method.svg", vector="true")
-pc_per_method_all_patches(results, PATCH_IDXS,"all_patches_est_pc_per_method.svg", vector="est")
-error_all_patches(results, PATCH_IDXS, "all_patches_error_cumsum.svg")
-coeff_vectors_hist_all_patches(results, PATCH_IDXS, "all_patches_coeffs_hist_full_y.svg" )
-coeff_vectors_cdf_all_patches(results, PATCH_IDXS, "all_patches_coeffs_cdf_lim.svg")
+pc_scatter_plots_all_patches(results, PATCH_IDXS, f"all_patches_pc_scatter_{ALG}.svg")
+pc_per_method_all_patches(results, PATCH_IDXS, f"all_patches_true_pc_per_method_{ALG}.svg", vector="true")
+pc_per_method_all_patches(results, PATCH_IDXS, f"all_patches_est_pc_per_method_{ALG}.svg", vector="est")
+error_all_patches(results, PATCH_IDXS, f"all_patches_error_cumsum_{ALG}.svg")
+coeff_vectors_hist_all_patches(results, PATCH_IDXS, f"all_patches_coeffs_hist_full_y_{ALG}.svg")
+coeff_vectors_cdf_all_patches(results, PATCH_IDXS, f"all_patches_coeffs_cdf_lim_{ALG}.svg")

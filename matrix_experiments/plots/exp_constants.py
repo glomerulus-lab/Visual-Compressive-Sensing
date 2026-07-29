@@ -9,4 +9,4 @@ CELL_SIZE = 50
 BLOB_SIZE = 6
 
 NUM_RUNS = 100
-ALG = "lasso"
+ALG = "bp"
