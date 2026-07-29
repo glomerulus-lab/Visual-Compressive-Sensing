@@ -248,7 +248,11 @@ def fourier_reconstruct(W, y, alpha, sample_sz, n, m, fit_intercept, algorithm='
         mini.fit(theta, y)
         s = mini.coef_
     elif algorithm == 'bp':
-        s, _, _, _ = spg_bp(theta, y.ravel(), iter_lim=20 * sample_sz)
+        try:
+            s, _, _, _ = spg_bp(theta, y.ravel())
+        except Exception as e:
+            print(f"Error occurred while solving basis pursuit: {e}")
+            np.savez("temp_data.npz", theta=theta, y=y.ravel())
     else:
         raise Exception(f"invalid argument to reconstruct, algorithm = {algorithm}")
     img = fft.idctn(s.reshape(n, m), norm='ortho', axes=[0,1])
