@@ -282,9 +282,11 @@ def V1_weights(num_weights, dim, size, spatial_freq, center=None, scale=1, seed=
 
     elif center is not None:
         C = V1_covariance_matrix(dim, size, spatial_freq, center, scale)
-
         W = np.random.multivariate_normal(mean=np.zeros(dim[0] * dim[1]), cov=C, size=num_weights)
         
+    # print("center of weights: ", center)
+    # print("Trace of covariance matrix: ", np.trace(C))
+    # print("Trace of covariance matrix: ", np.trace(np.cov(W.reshape(-1, dim[0] * dim[1]), rowvar=False)))
     return W
 
 

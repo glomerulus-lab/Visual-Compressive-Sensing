@@ -19,7 +19,7 @@ PLOTS:
     - coefficient hists
 ''' 
 
-def compute_patch_results(patch, n, cell_size, blob_size, alpha, algorithm=ALG):
+def compute_patch_results(patch, n, cell_size, blob_size, alpha, algorithm='bp', center=None):
     """
     Get necessary data for plots.
 
@@ -47,11 +47,13 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha, algorithm=ALG):
                 "p_true"        (ndarray): True coefficients projected onto PCs.
                 "error"         (ndarray): Per-component squared error (p_true - p_est)^2.
     """
+    if center == 'middle':
+        center = (int(patch.shape[0] / 2), int(patch.shape[1] / 2))
     # true coefs of theta
     coeffs_true = generate_coeff_vector(patch, n, cell_size, blob_size)
 
     # V1 - SVD
-    measurement_matrix_V1, V1_y = generate_V1_observation(patch, n, cell_size, blob_size, None)
+    measurement_matrix_V1, V1_y = generate_V1_observation(patch, n, cell_size, blob_size, center=center)
     theta_V1 = generate_design_matrix(measurement_matrix_V1)
     U_V1, S_V1, Vh_V1 = np.linalg.svd(theta_V1)
 
@@ -107,6 +109,8 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha, algorithm=ALG):
             "p_est": p_est_V1,
             "p_true": p_true_V1,
             "error" : err_V1,
+            "W": measurement_matrix_V1,
+            "Theta": theta_V1
         },
         "Pixel": {
             "U" : U_pix,
@@ -117,6 +121,8 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha, algorithm=ALG):
             "p_est": p_est_pix,
             "p_true": p_true_pix,
             "error" : err_pix,
+            "W": measurement_matrix_pix,
+            "Theta": theta_pix
         },
         "Gaussian": {
             "U" : U_gauss,
@@ -127,6 +133,8 @@ def compute_patch_results(patch, n, cell_size, blob_size, alpha, algorithm=ALG):
             "p_est": p_est_gauss,
             "p_true": p_true_gauss,
             "error" : err_gauss,
+            "W": measurement_matrix_gauss,
+            "Theta": theta_gauss
         }
     }
 
@@ -150,7 +158,7 @@ def get_results(img):
         all_results.append(res)
     return all_results
 
-def run_selected_patches(patches, patch_idxs):
+def run_selected_patches(patches, patch_idxs, center=None, algorithm='bp'):
     """
     Run reconstruction on a specific subset of patches identified by index.
 
@@ -173,7 +181,9 @@ def run_selected_patches(patches, patch_idxs):
             N_OBS,
             CELL_SIZE,
             BLOB_SIZE,
-            ALPHA
+            ALPHA,
+            center=center,
+            algorithm=algorithm,
         )
 
     return results
@@ -531,75 +541,83 @@ def coeff_vectors_cdf_all_patches(results, patch_idxs, filename):
     plt.savefig(filename, format="svg")
     plt.close()
 
-barbara = process_image("barbara.bmp", color=False)
-patches = extract_patches(barbara, PATCH_SIZE)
-# show_patches_grid(patches)
-results = run_selected_patches(patches, PATCH_IDXS)
+def main():
+    barbara = process_image("barbara.bmp", color=False)
+    patches = extract_patches(barbara, PATCH_SIZE)
+    # show_patches_grid(patches)
+    results = run_selected_patches(patches, PATCH_IDXS)
 
-# Theory?
-#good_patch = 58
-bad_patch = 233#169
+    # Theory?
+    # good_patch = 58
+    # bad_patch = 169
+    patch = results[58]
 
-pstar = results[bad_patch]['V1']['p_true']
-p = results[bad_patch]['V1']['p_est']
-err = results[bad_patch]['V1']['error']
-svs = results[bad_patch]['V1']['S']
-svs = np.pad(svs, (0, len(p) - len(svs)), 'constant', constant_values=(0,0))
-plt.semilogy(pstar,'.')
+    for method in ['V1', 'Pixel', 'Gaussian']:
+        print(f"Method: {method}")
+        patch_method = patch[method]
+        zstar = results[233]['coeffs_true'].flatten()
 
-U = results[bad_patch]['V1']['U']
-S = results[bad_patch]['V1']['S']
-Vh = results[bad_patch]['V1']['Vh']
+        pstar = patch_method['p_true']
+        p = patch_method['p_est']
+        err = patch_method['error']
 
-A = (U * S) @ Vh[:len(S),:]
+        U = patch_method['U']
+        S = patch_method['S']
+        Vh = patch_method['Vh']
+        z = patch_method['est_coeffs'].flatten()
 
-z = results[bad_patch]['V1']['est_coeffs'].flatten()
-zstar = results[bad_patch]['coeffs_true'].flatten()
-s = z.copy()
-s[np.abs(s) < 1e-12] = 0
-s[s > 0] = 1
-s[s < 0] = -1
-s = s
-Vh = results[bad_patch]['V1']['Vh']
-coeffs_nonzero = np.abs(s) > 0
-Vh_nonzero = Vh[:, coeffs_nonzero]
-Vh_zero = Vh[:, np.logical_not(coeffs_nonzero)]
-
-KKT_gap1 = ALPHA * s[coeffs_nonzero] - (A[:, coeffs_nonzero].T @ A @ (zstar - z)) / len(S)
-KKT_gap0 = ALPHA - np.abs((A[:, np.logical_not(coeffs_nonzero)].T @ A @ (zstar - z)) / len(S))
-
-KKT_pgap1 = ALPHA * s[coeffs_nonzero] - ((Vh_nonzero.T)[:, :len(S)] @ (S**2 * (pstar - p)[:len(S)])) / len(S)
-KKT_pgap0 = ALPHA - np.abs(((Vh_zero.T)[:, :len(S)] @ (S**2 * (pstar - p)[:len(S)]))) / len(S)
-
-assert np.allclose(KKT_gap1, KKT_pgap1)
-assert np.allclose(KKT_gap0, KKT_pgap0)
-
-R_eps = Vh_nonzero.T
-R_epsc = Vh_zero.T
-
-plt.semilogy(zstar ** 2)
-
-# R_eps @ Sigma @ U.T @ A_eps @ (zstar_eps - z_eps) = n lambda s_eps
+        print(f"Condition number: {S[0] / S[-1]}")
+        print(f"Stable dimension: {np.sum(S) / S[0]}")
+        print(f"Trace: {np.sum(S)}")
+        print(f"Min eigenvalue: {S[-1]}")
 
 
 
-# TODO: run for single patch results
-# for patch_idx, patch_results in results.items():
-#     results = {256: patch_results}
-#     pc_per_method(results, 256, patch_idx)
-#     pc_scatter_plots(results, 256, f"PC_scatter_patch_{patch_idx}.svg", patch_idx)
-#     compare_smoothed_errors(results, [256], f"smoothed_error_cdf_patch_{patch_idx}.svg", patch_idx)
-#     plot_top_pcs(results, num_obs=256, num_pcs=3,
-#                     title=f"Principal Components per Method  - Patch {patch_idx}",
-#                     fileName=f"pc_top3_images_256_patch_{patch_idx}.png", 
-#     )
-#     coeff_vectors_hist(results, 256, patch_idx)
-#     coeff_vectors_cdf(results, 256, patch_idx)
+    # svs = np.pad(S, (0, len(p) - len(S)), 'constant', constant_values=(0,0))
+    # A = (U * S) @ Vh[:len(S),:]
 
-# TODO: run for all patches
-pc_scatter_plots_all_patches(results, PATCH_IDXS, f"all_patches_pc_scatter_{ALG}.svg")
-pc_per_method_all_patches(results, PATCH_IDXS, f"all_patches_true_pc_per_method_{ALG}.svg", vector="true")
-pc_per_method_all_patches(results, PATCH_IDXS, f"all_patches_est_pc_per_method_{ALG}.svg", vector="est")
-error_all_patches(results, PATCH_IDXS, f"all_patches_error_cumsum_{ALG}.svg")
-coeff_vectors_hist_all_patches(results, PATCH_IDXS, f"all_patches_coeffs_hist_full_y_{ALG}.svg")
-coeff_vectors_cdf_all_patches(results, PATCH_IDXS, f"all_patches_coeffs_cdf_lim_{ALG}.svg")
+    # s = z.copy()
+    # s[np.abs(s) < 1e-12] = 0
+    # s[s > 0] = 1
+    # s[s < 0] = -1
+    # s = s
+    # coeffs_nonzero = np.abs(s) > 0
+    # Vh_nonzero = Vh[:, coeffs_nonzero]
+    # Vh_zero = Vh[:, np.logical_not(coeffs_nonzero)]
+
+    # KKT_gap1 = ALPHA * s[coeffs_nonzero] - (A[:, coeffs_nonzero].T @ A @ (zstar - z)) / len(S)
+    # KKT_gap0 = ALPHA - np.abs((A[:, np.logical_not(coeffs_nonzero)].T @ A @ (zstar - z)) / len(S))
+
+    # KKT_pgap1 = ALPHA * s[coeffs_nonzero] - ((Vh_nonzero.T)[:, :len(S)] @ (S**2 * (pstar - p)[:len(S)])) / len(S)
+    # KKT_pgap0 = ALPHA - np.abs(((Vh_zero.T)[:, :len(S)] @ (S**2 * (pstar - p)[:len(S)]))) / len(S)
+
+    # assert np.allclose(KKT_gap1, KKT_pgap1)
+    # assert np.allclose(KKT_gap0, KKT_pgap0)
+
+    # R_eps @ Sigma @ U.T @ A_eps @ (zstar_eps - z_eps) = n lambda s_eps
+
+
+
+    # TODO: run for single patch results
+    # for patch_idx, patch_results in results.items():
+    #     results = {256: patch_results}
+    #     pc_per_method(results, 256, patch_idx)
+    #     pc_scatter_plots(results, 256, f"PC_scatter_patch_{patch_idx}.svg", patch_idx)
+    #     compare_smoothed_errors(results, [256], f"smoothed_error_cdf_patch_{patch_idx}.svg", patch_idx)
+    #     plot_top_pcs(results, num_obs=256, num_pcs=3,
+    #                     title=f"Principal Components per Method  - Patch {patch_idx}",
+    #                     fileName=f"pc_top3_images_256_patch_{patch_idx}.png", 
+    #     )
+    #     coeff_vectors_hist(results, 256, patch_idx)
+    #     coeff_vectors_cdf(results, 256, patch_idx)
+
+    # TODO: run for all patches
+    pc_scatter_plots_all_patches(results, PATCH_IDXS, f"all_patches_pc_scatter_{ALG}.svg")
+    pc_per_method_all_patches(results, PATCH_IDXS, f"all_patches_true_pc_per_method_{ALG}.svg", vector="true")
+    pc_per_method_all_patches(results, PATCH_IDXS, f"all_patches_est_pc_per_method_{ALG}.svg", vector="est")
+    error_all_patches(results, PATCH_IDXS, f"all_patches_error_cumsum_{ALG}.svg")
+    coeff_vectors_hist_all_patches(results, PATCH_IDXS, f"all_patches_coeffs_hist_full_y_{ALG}.svg")
+    coeff_vectors_cdf_all_patches(results, PATCH_IDXS, f"all_patches_coeffs_cdf_lim_{ALG}.svg")
+
+if __name__== "__main__":
+    main()

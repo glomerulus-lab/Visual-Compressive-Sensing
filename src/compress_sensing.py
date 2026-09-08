@@ -8,16 +8,26 @@ from scipy import fftpack as fft
 import pywt
 from pywt import wavedecn
 from sklearn.linear_model import Lasso, Ridge, OrthogonalMatchingPursuit
-from spgl1 import spg_bp
-
 
 import warnings
 from sklearn.exceptions import ConvergenceWarning
 from src.utility import *
 
+from scipy.optimize import linprog
+
 # Packages for images
 from PIL import Image, ImageOps
 
+
+def basis_pursuit(theta, y, x0=None):
+    n, d = theta.shape
+    assert n == y.shape[0], "theta and y must have compatible dimensions"
+    if x0 is not None:
+        x0 = np.concatenate([np.maximum(x0, 0), np.maximum(-x0, 0)])
+    c = np.ones(2 * d)
+    A_eq = np.hstack([theta, -theta])
+    res = linprog(c, A_eq=A_eq, b_eq=y, bounds=(0, None), method='highs', x0=x0)
+    return res.x[:d] - res.x[d:]
 
 # Generate General Variables
 def generate_Y(W, img_arr):
@@ -49,10 +59,11 @@ def generate_Y(W, img_arr):
 def generate_V1_weights(num_cell, dim, cell_size, blob_size, center = None):
     # Store generated V1 cells in W
     n, m = dim
-    W = V1_weights(num_cell, dim, cell_size, blob_size, center)
+    W = V1_weights(num_cell, dim, cell_size, blob_size, center, scale=1)
     # Resize W to shape (num_cell, height of image, width of image) for 
     # fetching into function
     W = W.reshape(num_cell, n, m)
+    # print("Trace of V1 covariance matrix: ", np.trace(np.cov(W.reshape(num_cell, n*m), rowvar=False)))
     return W
 
 def generate_V1_observation(img_arr, num_cell, cell_size, blob_size, center = None):
@@ -97,6 +108,7 @@ def generate_V1_observation(img_arr, num_cell, cell_size, blob_size, center = No
 def generate_pixel_weights(num_cell, n, m, rand_index):
     W = np.eye(n * m)[rand_index, :] * np.sqrt(n * m)
     W = W.reshape(num_cell, n, m)
+    # print("Trace of Pixel covariance matrix: ", np.trace(np.cov(W.reshape(num_cell, n*m), rowvar=False)))
     return W
 
 # Generate pixel Variables
@@ -131,6 +143,7 @@ def generate_pixel_observation(img_arr, num_cell) :
 # Generate Gaussian Weights
 def generate_gaussian_weights(num_cell, n, m):
     W = np.random.randn(num_cell, n, m)
+    # print("Trace of Gaussian covariance matrix: ", np.trace(np.cov(W.reshape(num_cell, n*m), rowvar=False)))
     return W
 
 def generate_gaussian_observation(img_arr, num_cell):
@@ -227,7 +240,10 @@ def fourier_reconstruct(W, y, alpha, sample_sz, n, m, fit_intercept, algorithm='
     # Ignore convergence warning to allow convergence warning not filling up 
     # all spaces when testing
     warnings.filterwarnings('ignore', category=ConvergenceWarning)
-    
+
+    assert isinstance(fit_intercept, bool), "fit_intercept must be a boolean value"
+    assert fit_intercept == False, "fit_intercept = True not implemented"
+
     theta = fft.dctn(W.reshape(sample_sz, n, m), norm = 'ortho', axes = [1, 2])
     
     theta = theta.reshape(sample_sz, n * m)
@@ -248,11 +264,23 @@ def fourier_reconstruct(W, y, alpha, sample_sz, n, m, fit_intercept, algorithm='
         mini.fit(theta, y)
         s = mini.coef_
     elif algorithm == 'bp':
-        try:
-            s, _, _, _ = spg_bp(theta, y.ravel())
-        except Exception as e:
-            print(f"Error occurred while solving basis pursuit: {e}")
-            np.savez("temp_data.npz", theta=theta, y=y.ravel())
+        # initial condition
+        # mini = OrthogonalMatchingPursuit(tol=1e-4, fit_intercept=fit_intercept)
+        # mini.fit(theta, y)
+        # s0 = np.array(mini.coef_)
+        # print(f"Initial condition nnz: {np.count_nonzero(s0)}")
+        # try:
+        #     theta_aug = theta
+        #     y_aug = y.ravel()
+        #     #theta_aug = np.vstack([theta, np.eye(n*m) * 1e-8])
+        #     #y_aug = np.concatenate([y.ravel(), np.zeros(n*m)])
+        #     s, _, _, info = spgl1(theta_aug, y_aug, sigma=0, subspace_min=True, verbosity=0, iter_lim=20000)
+        #     print(f"exit status: {info['stat']}"    )
+        # except Exception as e:
+        #     print(f"Error occurred while solving basis pursuit: {e}")
+        #     np.savez("temp_data.npz", theta=theta, y=y.ravel())
+        s = basis_pursuit(theta, y)
+        # print(f"Solution nnz: {np.count_nonzero(s)}")
     else:
         raise Exception(f"invalid argument to reconstruct, algorithm = {algorithm}")
     img = fft.idctn(s.reshape(n, m), norm='ortho', axes=[0,1])
@@ -445,7 +473,7 @@ def reconstruct(W, y, alpha = None, fit_intercept = False, method = 'dct',
         # Reform the image using sparse vector s with inverse discrete cosine
         
     if fit_intercept:
-        reform += mini.intercept_ # not sure this is right
+        raise Exception("fit_intercept = True not implemented")
     
     #return reformed img
     return img
