@@ -1,141 +1,239 @@
-# %load_ext autoreload
-# %autoreload 2
-
 import numpy as np
-import scipy
 import cvxpy as cp
-from matplotlib import pyplot as plt
 
-from .plots.paper_plots import process_image, extract_patches, run_selected_patches
-from .plots.exp_constants import *
-from structured_random_features.src.models.weights import V1_covariance_matrix
+from scipy.special import erfc
+from scipy.optimize import minimize_scalar
 
-dim = (PATCH_SIZE, PATCH_SIZE)
-d = PATCH_SIZE * PATCH_SIZE
-center = (PATCH_SIZE / 2, PATCH_SIZE / 2)
+# def gaussian_width_NSP_cvx(d, S, rho, num_samples, cov_sqrt):
+#     """Estimate w(C) = E[sup_{x in C, ||x||_2 <= 1} <g,x>] for
+#     C = {x : ||x_S||_1 >= rho ||x_S^c||_1} in R^d, by solving the equivalent
+#     problem sup_{u in K, ||u||_2 <= 1} <|g|, u> over the cone
+#     K = {u >= 0 : sum(u_S) >= rho * sum(u_S^c)} described above, once per
+#     sampled g. Returns (mean width, raw per-sample widths)."""
+#     S = sorted(S)
+#     Sc = sorted(set(range(d)) - set(S))
 
-ALG = 'bp'
-idx = 58
-PATCH_IDXS = [idx]
+#     u = cp.Variable(d, nonneg=True)
+#     absg = cp.Parameter(d, nonneg=True)
 
-# T = conv{e_1, ..., e_d}, the standard simplex. sup_{x in T} <a, x> = max_i a_i,
-# so a plain vertex-enumeration estimate (np.max) is exact. The CVXPY estimate
-# below solves the same maximization as an explicit LP per sample, as a
-# cross-check that generalizes to convex sets without a closed-form max.
-NUM_SAMPLES_VERTEX = 10000
-NUM_SAMPLES_CVX = 1000
+#     constraints = [cp.sum(u[S]) >= rho * cp.sum(u[Sc]), cp.norm2(cov_sqrt @ u) <= 1]
+#     objective = cp.Maximize(absg @ u)
+#     problem = cp.Problem(objective, constraints)
 
-print(f"Computing V1 covariance for patch {idx} of {IMAGE_FILE}, cell_size={CELL_SIZE}, blob_size={BLOB_SIZE}")
-barbara = process_image("barbara.bmp", color=False)
-patches = extract_patches(barbara, PATCH_SIZE)
-results = run_selected_patches(patches, PATCH_IDXS, center=center, algorithm=ALG)
-zstar = results[idx]['coeffs_true'].flatten()
+#     g_samples = cov_sqrt @ np.random.randn(d, num_samples)
+#     widths = np.zeros(num_samples)
+#     for j in range(num_samples):
+#         absg.value = np.abs(g_samples[:, j])
+#         problem.solve()
+#         widths[j] = problem.value
+#         print(f"Sample {j+1}/{num_samples}: width = {widths[j]:.4f}")
+#     return widths.mean(), widths
 
-CV1 = V1_covariance_matrix(patches[idx].shape, CELL_SIZE, BLOB_SIZE, center=center)
-L, Q = np.linalg.eigh(CV1)
-order = np.argsort(L)[::-1]
-L = L[order]
-Q = Q[:, order]
-Qpix = Q.copy()
-Q = scipy.fft.dctn(Qpix.T.reshape(d, dim[0], dim[1]), norm='ortho', axes=[1, 2]).reshape(d, d).T
-sqrtCV1 = (Q * np.sqrt(L)) @ Q.T
-sqrtinv = (Q * (1 / np.sqrt(L))) @ Q.T
+def Psi(c):
+    phi = lambda u: np.exp(-u*u/2)/np.sqrt(2*np.pi)
+    Q   = lambda u: 0.5*erfc(u/np.sqrt(2))
 
+    c = np.asarray(c, float)
+    pos = 1 + 2*c*np.sqrt(2/np.pi) + c**2
+    u = np.abs(c)
+    neg = 2*((1+c**2)*Q(u) - u*phi(u))
+    return np.where(c >= 0, pos, neg)
 
-def gaussian_width_vertex(A, num_samples):
-    """Estimate w(A T) for T = conv{e_1, ..., e_d} via the closed-form vertex max."""
-    g = np.random.randn(A.shape[1], num_samples)
-    return np.max(np.abs(A @ g), axis=0) # remove abs for simplex
+def statdim_bound(d, S, rho, c):
+    S = np.asarray(sorted(S)); Sc = np.setdiff1d(np.arange(d), S)
+    a = np.empty(d); a[S] = 1/np.sqrt(c[S]); a[Sc] = -rho/np.sqrt(c[Sc])
+    F = lambda mu: Psi(mu*a).sum()
+    hi = 1.0
+    while F(hi) < F(hi/2): hi *= 2          # bracket
+    r = minimize_scalar(F, bounds=(0, max(hi,1)*4), method='bounded',
+                        options={'xatol':1e-10})
+    return r.fun, r.x
 
-
-def gaussian_width_cvx(A, num_samples):
-    """Estimate w(A T) for T = conv{e_1, ..., e_d} by solving
-    max_{x in T} <g, A x> with CVXPY for each sampled Gaussian vector g."""
-    n = A.shape[1]
-    x = cp.Variable(n)
-    g_param = cp.Parameter(A.shape[0])
-    # constraints = [x >= 0, cp.sum(x) == 1] # for simplex
-    constraints = [cp.norm1(x) <= 1]
-    objective = cp.Maximize(g_param @ (A @ x))
-    problem = cp.Problem(objective, constraints)
-
-    widths = np.zeros(num_samples)
-    for i in range(num_samples):
-        g_param.value = np.random.randn(A.shape[0])
-        problem.solve()
-        widths[i] = problem.value
-    return widths
+def diag_analytic(d, S, rho, c):
+    """Analytic upper bound on w(C) = E[sup_{x in C, ||x||_2 <= 1} <g,x>] for
+    C = {x : ||x_S||_1 >= rho ||x_S^c||_1} in R^d, using the statistical dimension
+    bound from Amelunxen et al. (2014)."""
+    statdim, mu = statdim_bound(d, S, rho, c)
+    return np.sqrt(statdim), mu
 
 
-print("\nEstimating Gaussian width via vertex enumeration...")
-w_T_vertex = gaussian_width_vertex(np.eye(d), NUM_SAMPLES_VERTEX)
-w_CT_vertex = gaussian_width_vertex(sqrtCV1, NUM_SAMPLES_VERTEX)
+"""
+Gaussian width of  T = Gamma ∩ B_2^d,   Gamma = { x : C^{-1/2} x in K },
+K = { v : ||v_S||_1 >= rho ||v_Sc||_1 }   (the NSP / l1-descent cone).
 
-print("Estimating Gaussian width via CVXPY...")
-w_T_cvx = gaussian_width_cvx(np.eye(d), NUM_SAMPLES_CVX)
-w_CT_cvx = gaussian_width_cvx(sqrtCV1, NUM_SAMPLES_CVX)
+w(T) = E_g sup_{x in T} <g,x>,  g ~ N(0,I_d).
 
-print(f"\nw(T):       vertex-enum mean = {w_T_vertex.mean():.4f}   CVXPY mean = {w_T_cvx.mean():.4f}")
-print(f"w(C^0.5 T): vertex-enum mean = {w_CT_vertex.mean():.4f}   CVXPY mean = {w_CT_cvx.mean():.4f}")
+Method
+------
+Gamma is a cone, so for each sample the support function is a projection:
+    sup_{x in Gamma, ||x||<=1} <g,x> = ||Pi_Gamma(g)||_2.
+K is nonconvex; it splits as K = U_eps K_eps over sign patterns eps in {+-1}^s,
+with K_eps = { v : rho||v_Sc||_1 <= <eps, v_S> } convex.  For a fixed eps,
+    dist(g, Gamma_eps)^2 = min_{v in K_eps} ||C^{1/2} v - g||^2
+is a smooth QP over a one-constraint convex cone whose Euclidean projection has
+a closed form (soft-threshold off S, shift by mu*eps on S, mu from an exact
+O(d log d) breakpoint search).  Solved by batched FISTA over all Monte Carlo
+samples at once.  eps is found by a sign fixed-point iteration with restarts.
+
+Every eps visited yields a *certified lower bound*
+    <g, x> / ||x||_2  with x = C^{1/2} v, v feasible,
+so the estimator is conservative under inexact convergence and the running max
+over restarts is always valid.
+"""
+# ---------------------------------------------------------------- projection
+def _proj_K_eps(Y, eps, S, Sc, rho):
+    """Batched Euclidean projection of columns of Y (d x N) onto
+    K_eps = {v : rho||v_Sc||_1 <= <eps, v_S>}.  eps is (s x N) of +-1."""
+    d, N = Y.shape
+    s, m = len(S), len(Sc)
+    Ys, Yc = Y[S, :], Y[Sc, :]
+    c = np.einsum('ij,ij->j', eps, Ys)          # <eps, y_S>
+    Tm = np.abs(Yc)
+    viol = rho * Tm.sum(0) - c
+
+    mu = np.zeros(N)
+    act = viol > 0                               # infeasible columns need mu>0
+    if act.any():
+        Ta = Tm[:, act]
+        c_a = c[act]
+        Ts = -np.sort(-Ta, axis=0)               # descending, m x na
+        CS = np.vstack([np.zeros(Ts.shape[1]), np.cumsum(Ts, axis=0)])   # (m+1) x na
+        k = np.arange(m + 1)[:, None]
+        mu_k = (rho * CS - c_a[None, :]) / (k * rho**2 + s)
+        lo = np.vstack([Ts, np.zeros(Ts.shape[1])]) / rho                # (m+1) x na
+        hi = np.vstack([np.full((1, Ts.shape[1]), np.inf), Ts]) / rho
+        ok = (mu_k >= lo - 1e-12) & (mu_k <= hi + 1e-12) & (mu_k >= 0)
+        idx = np.argmax(ok, axis=0)                                       # first valid k
+        mu[act] = np.maximum(mu_k[idx, np.arange(idx.size)], 0.0)
+
+    V = np.empty_like(Y)
+    V[S, :] = Ys + mu[None, :] * eps
+    V[Sc, :] = np.sign(Yc) * np.maximum(Tm - rho * mu[None, :], 0.0)
+    return V
 
 
-def localized_gaussian_width_cvx(A, r_values, num_samples, inverse=False):
-    """Estimate the localized Gaussian width w_r(A T) = w(A T \\cap r B) for a
-    range of r, where T is the unit l1 ball and B is the unit l2 ball:
-        w_r(A T) = E[sup_{x: ||x||_1 <= 1, ||x||_2 <= r} <g, Ax>]
-    Solves one LP per (r, sample) with CVXPY, reusing the same compiled problem
-    and the same num_samples draws of g across all r (so the resulting curve is
-    monotone non-decreasing in r, since the feasible region only grows)."""
-    n = A.shape[1]
-    x = cp.Variable(n)
-    g_param = cp.Parameter(A.shape[0])
-    r_param = cp.Parameter(nonneg=True)
-    if inverse:
-        constraints = [cp.norm1(A @ x) <= 1, cp.norm2(x) <= r_param]
-        objective = cp.Maximize(g_param @ x)
-    else:
-        constraints = [cp.norm1(x) <= 1, cp.norm2(x) <= r_param]
-        objective = cp.Maximize(g_param @ (A @ x))
-    problem = cp.Problem(objective, constraints)
-
-    g_samples = np.random.randn(A.shape[0], num_samples)
-    widths = np.zeros((len(r_values), num_samples))
-    for j in range(num_samples):
-        g_param.value = g_samples[:, j]
-        for i, r in enumerate(r_values):
-            r_param.value = r
-            problem.solve()
-            widths[i, j] = problem.value
-    return widths.mean(axis=1)
+# ---------------------------------------------------------------- inner solve
+def _fista(G, Csqrt, C, eps, S, Sc, rho, Lip, iters, tol=1e-7, check=10):
+    """min_{v in K_eps} 0.5||C^{1/2}v - g||^2, batched over columns of G."""
+    B = Csqrt @ G                                # C^{1/2} g, the linear term
+    V = _proj_K_eps(B, eps, S, Sc, rho)          # warm start
+    Z, t = V.copy(), 1.0
+    for it in range(iters):
+        Vn = _proj_K_eps(Z - (C @ Z - B) / Lip, eps, S, Sc, rho)
+        tn = 0.5 * (1 + np.sqrt(1 + 4 * t * t))
+        Z = Vn + ((t - 1) / tn) * (Vn - V)
+        if it % check == check - 1:
+            if np.linalg.norm(Vn - V) <= tol * max(np.linalg.norm(Vn), 1.0):
+                return Vn
+        V, t = Vn, tn
+    return V
 
 
-R_VALUES = np.linspace(.5, 60.0, 10)
-NUM_SAMPLES_LOCAL = 100
+def _value(V, G, Csqrt):
+    """Certified per-sample lower bound <g,x>/||x||, x = C^{1/2}v, clipped at 0."""
+    X = Csqrt @ V
+    nx = np.linalg.norm(X, axis=0)
+    num = np.einsum('ij,ij->j', G, X)
+    return np.where(nx > 1e-12, num / np.maximum(nx, 1e-12), 0.0).clip(min=0.0)
 
-print("\nEstimating localized Gaussian width w_r(T) over a range of r...")
-w_r_T = localized_gaussian_width_cvx(np.eye(d), R_VALUES, NUM_SAMPLES_LOCAL)
-w_r_CT = localized_gaussian_width_cvx(sqrtCV1, R_VALUES, NUM_SAMPLES_LOCAL)
-# w_r_T = localized_gaussian_width_cvx(np.eye(d), R_VALUES, NUM_SAMPLES_LOCAL, inverse=True)
-# w_r_CT = localized_gaussian_width_cvx(sqrtinv, R_VALUES, NUM_SAMPLES_LOCAL, inverse=True)
 
-plt.figure()
-plt.plot(R_VALUES, w_r_T / R_VALUES, marker='o', label=r"$w_r(T) / r$")
-plt.plot(R_VALUES, w_r_CT / R_VALUES, marker='o', label=r"$w_r(C^{0.5} T) / r$")
-plt.xlabel("r")
-plt.yscale('log')
-plt.ylabel(r"$w_r(T)/r$")
-plt.legend()
-plt.title(f"Localized Gaussian width for patch {idx}")
-plt.show()
+# ---------------------------------------------------------------- driver
+def gaussian_width(d, S, rho, cov, num_samples=400, restarts=4,
+                   iters=250, sign_rounds=4, batch=None, seed=0, verbose=True,
+                   max_enum=256):
+    S = np.asarray(sorted(S), dtype=int)
+    Sc = np.setdiff1d(np.arange(d), S)
+    s = len(S)
 
-plt.figure()
-plt.hist(w_T_vertex, bins=50, alpha=0.5, density=True, label="w(T) vertex-enum")
-plt.hist(w_CT_vertex, bins=50, alpha=0.5, density=True, label="w(C^0.5 T) vertex-enum")
-plt.axvline(w_T_vertex.mean(), color='k', linestyle=':', label="w(T) vertex-enum mean")
-plt.axvline(w_CT_vertex.mean(), color='r', linestyle=':', label="w(C^0.5 T) vertex-enum mean")
-plt.axvline(w_T_cvx.mean(), color='k', linestyle='--', label="w(T) CVXPY mean")
-plt.axvline(w_CT_cvx.mean(), color='r', linestyle='--', label="w(C^0.5 T) CVXPY mean")
-plt.xlabel(r"$\sup_{x \in T} \langle g, x \rangle$")
-plt.legend()
-plt.title(f"Gaussian width estimates for patch {idx}")
-plt.show()
+    lam, Q = np.linalg.eigh(cov)
+    lam = np.maximum(lam, 0.0)
+    Csqrt = (Q * np.sqrt(lam)) @ Q.T
+    Cisqrt = (Q * np.where(lam > 0, 1/np.sqrt(np.maximum(lam, 1e-300)), 0)) @ Q.T
+    Cm = (Q * lam) @ Q.T
+    Lip = lam.max()
+
+    rng = np.random.default_rng(seed)
+    batch = batch or num_samples
+    vals, ub = [], []
+
+    for start in range(0, num_samples, batch):
+        n = min(batch, num_samples - start)
+        G = rng.standard_normal((d, n))
+        best = np.zeros(n)
+
+        if 2**s <= max_enum:                              # exact: enumerate all eps
+            for bits in range(2**s):
+                pat = np.array([1.0 if (bits >> i) & 1 else -1.0 for i in range(s)])
+                E = np.repeat(pat[:, None], n, axis=1)
+                V = _fista(G, Csqrt, Cm, E, S, Sc, rho, Lip, iters)
+                best = np.maximum(best, _value(V, G, Csqrt))
+        else:                                             # heuristic: fixed point
+            for r in range(restarts):
+                if r == 0:                                # greedy init
+                    E = np.sign((Cisqrt @ G)[S, :])
+                else:                                     # perturb the greedy init
+                    E = np.sign((Cisqrt @ G)[S, :])
+                    flip = rng.random((s, n)) < 0.3
+                    E = np.where(flip, -E, E)
+                E[E == 0] = 1.0
+                for _ in range(sign_rounds):              # sign fixed point
+                    V = _fista(G, Csqrt, Cm, E, S, Sc, rho, Lip, iters)
+                    best = np.maximum(best, _value(V, G, Csqrt))
+                    En = np.sign(V[S, :])
+                    En[En == 0] = E[En == 0]
+                    if np.array_equal(En, E):
+                        break
+                    E = En
+        vals.append(best)
+
+        kap = (1 + 1/rho) * np.sqrt(s) / np.sqrt(max(lam.min(), 1e-300))
+        ub.append(np.minimum(np.linalg.norm(G, axis=0),
+                             kap * np.abs(Csqrt @ G).max(0)))
+
+    v = np.concatenate(vals)
+    se = v.std(ddof=1) / np.sqrt(len(v))
+    if verbose:
+        print(f"w = {v.mean():.4f} +/- {se:.4f}   "
+              f"[ceiling {np.concatenate(ub).mean():.3f}]   "
+              f"stat.dim ~ {(v**2).mean():.2f}")
+    return v.mean(), se, v
+
+def diag_sampling(d, S, rho, c, num_samples=20000, seed=0, batch=5000):
+    """Exact per-sample width for DIAGONAL covariance c (length-d vector).
+    No sign enumeration, no iterative solver."""
+    S = np.asarray(sorted(S)); Sc = np.setdiff1d(np.arange(d), S)
+    a = np.empty(d)
+    a[S]  =  1.0/np.sqrt(c[S])
+    a[Sc] = -rho/np.sqrt(c[Sc])
+    rng = np.random.default_rng(seed); out = []
+    for st in range(0, num_samples, batch):
+        n = min(batch, num_samples-st)
+        B = np.abs(rng.standard_normal((d, n)))          # |g|, g ~ N(0,I)
+        phi = lambda mu: (a[:,None]*np.maximum(B + mu[None,:]*a[:,None], 0)).sum(0)
+        lo = np.zeros(n)
+        hi = np.full(n, 1.0)
+        while np.any(phi(hi) < 0):                        # expand bracket
+            hi = np.where(phi(hi) < 0, hi*2, hi)
+        for _ in range(100):                              # bisection to machine eps
+            mid = 0.5*(lo+hi); p = phi(mid)
+            lo = np.where(p < 0, mid, lo); hi = np.where(p < 0, hi, mid)
+        mu = np.where(phi(np.zeros(n)) >= 0, 0.0, 0.5*(lo+hi))
+        T = np.maximum(B + mu[None,:]*a[:,None], 0)
+        T /= np.maximum(np.linalg.norm(T, axis=0), 1e-300)
+        out.append(np.einsum('ij,ij->j', B, T))
+    v = np.concatenate(out)
+    return v.mean(), v.std(ddof=1)/np.sqrt(len(v)), v
+
+if __name__ == "__main__":
+    rng = np.random.default_rng(7); d, s = 300, 12
+    print(f"{'covariance':22s} {'w (MC)':>9s} {'sqrt(dMC)':>10s} {'sqrt(bound)':>12s} {'slack':>7s}")
+    for tag, c in [('c = 1 (isotropic)', np.ones(d)),
+                   ('c geometric 1..100', np.geomspace(1,100,d)),
+                   ('c random lognormal', np.exp(rng.standard_normal(d)))]:
+        m, se, v = diag_sampling(d, range(s), 1.0, c, num_samples=40000, seed=4)
+        dmc = (v**2).mean()
+        bnd, mus = statdim_bound(d, range(s), 1.0, c)
+        print(f"{tag:22s} {m:9.4f} {np.sqrt(dmc):10.4f} {np.sqrt(bnd):12.4f} "
+              f"{100*(np.sqrt(bnd)/np.sqrt(dmc)-1):6.2f}%")
+    print("\nisotropic asymptotic check   2s log(d/s) =", round(2*s*np.log(d/s),2))
+    print("analytic bound               =", round(statdim_bound(d,range(s),1.0,np.ones(d))[0],2))
