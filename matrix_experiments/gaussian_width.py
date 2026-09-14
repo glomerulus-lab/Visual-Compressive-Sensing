@@ -224,6 +224,22 @@ def diag_sampling(d, S, rho, c, num_samples=20000, seed=0, batch=5000):
     v = np.concatenate(out)
     return v.mean(), v.std(ddof=1)/np.sqrt(len(v)), v
 
+def descent_cone_statdim(d, s):
+    """Exact statistical dimension of the l1 descent cone at an s-sparse vector,
+    under an isotropic Gaussian:  min_tau s(1+tau^2) + (d-s) E[(|g|-tau)_+^2].
+
+    This is a *reference*, not one of the three requested covariances.  The NSP
+    cone {||x_S||_1 >= rho||x_Sc||_1} is the union of the descent cones over all
+    2^s sign patterns on S, so its statistical dimension is strictly larger;
+    comparing the two shows how much of any gap to the data is that relaxation.
+    """
+    from scipy.optimize import minimize_scalar
+    F = lambda tau: s * (1 + tau ** 2) + (d - s) * Psi(-tau)
+    r = minimize_scalar(F, bounds=(0, np.sqrt(2 * np.log(d / s)) * 4),
+                        method='bounded', options={'xatol': 1e-10})
+    return r.fun
+
+
 if __name__ == "__main__":
     rng = np.random.default_rng(7); d, s = 300, 12
     print(f"{'covariance':22s} {'w (MC)':>9s} {'sqrt(dMC)':>10s} {'sqrt(bound)':>12s} {'slack':>7s}")

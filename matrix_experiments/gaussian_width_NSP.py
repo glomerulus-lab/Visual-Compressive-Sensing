@@ -13,7 +13,7 @@ PATCH_SIZE = 32
 CELL_SIZE = 50
 BLOB_SIZE = 6
 
-s = 50
+s = 40
 
 d = PATCH_SIZE * PATCH_SIZE
 S = np.arange(s).astype(int)
@@ -42,7 +42,7 @@ cov = np.diag(spectrum) + 1e-6 * np.eye(d)
 
 cov *= d / cov.trace()
 
-width_bound = np.sqrt(2 * s * np.log(d / s) + (5/4) * s)
+width_bound = np.sqrt(2 * s * np.log(d / s) + (5/4) * s) # Chandra
 print(f"uniform bound:" f" {width_bound:.4f}, dim: {width_bound ** 2:.1f}")
 
 print(f"Estimating Gaussian width of the RNP bad set in R^{d}, S={S}, rho={rho}")

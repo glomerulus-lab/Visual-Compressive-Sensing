@@ -158,7 +158,7 @@ def get_results(img):
         all_results.append(res)
     return all_results
 
-def run_selected_patches(patches, patch_idxs, center=None, algorithm='bp'):
+def run_selected_patches(patches, patch_idxs, center=None, algorithm='bp', n=None):
     """
     Run reconstruction on a specific subset of patches identified by index.
 
@@ -167,18 +167,27 @@ def run_selected_patches(patches, patch_idxs, center=None, algorithm='bp'):
             Full list of extracted image patches.
         patch_idxs (list[int]): 
             Indices into 'patches' to process.
+        center (array_like, optional):
+            Center of the V1 receptive fields.
+        algorithm (str, optional):
+            Solver passed through to compute_patch_results.
+        n (int, optional):
+            Number of observations. Defaults to the global N_OBS.
 
     Returns:
         dict[int, dict]: 
             Mapping from patch index to its compute_patch_results dictionary.
     """
+    if n is None:
+        n = N_OBS
+
     results = {}
 
     for idx in patch_idxs:
-        print(f"Running patch {idx}")
+        # print(f"Running patch {idx}")
         results[idx] = compute_patch_results(
             patches[idx],
-            N_OBS,
+            n,
             CELL_SIZE,
             BLOB_SIZE,
             ALPHA,
