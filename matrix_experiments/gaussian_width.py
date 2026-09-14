@@ -39,9 +39,13 @@ def Psi(c):
     neg = 2*((1+c**2)*Q(u) - u*phi(u))
     return np.where(c >= 0, pos, neg)
 
-def statdim_bound(d, S, rho, c):
-    S = np.asarray(sorted(S)); Sc = np.setdiff1d(np.arange(d), S)
-    a = np.empty(d); a[S] = 1/np.sqrt(c[S]); a[Sc] = -rho/np.sqrt(c[Sc])
+def statdim_bound_NSP(d, S, rho, c):
+    S = np.asarray(sorted(S))
+    Sc = np.setdiff1d(np.arange(d), S)
+    a = np.empty(d)
+    a[S] = 1/np.sqrt(c[S])
+    a[Sc] = -rho/np.sqrt(c[Sc])
+
     F = lambda mu: Psi(mu*a).sum()
     hi = 1.0
     while F(hi) < F(hi/2): hi *= 2          # bracket
@@ -49,11 +53,11 @@ def statdim_bound(d, S, rho, c):
                         options={'xatol':1e-10})
     return r.fun, r.x
 
-def diag_analytic(d, S, rho, c):
-    """Analytic upper bound on w(C) = E[sup_{x in C, ||x||_2 <= 1} <g,x>] for
-    C = {x : ||x_S||_1 >= rho ||x_S^c||_1} in R^d, using the statistical dimension
+def diag_analytic_NSP(d, S, rho, c):
+    """Analytic upper bound on w(T) = E[sup_{x in T, ||x||_2 <= 1} <g,x>] for
+    T = {x : ||x_S||_1 >= rho ||x_S^c||_1} in R^d, using the statistical dimension
     bound from Amelunxen et al. (2014)."""
-    statdim, mu = statdim_bound(d, S, rho, c)
+    statdim, mu = statdim_bound_NSP(d, S, rho, c)
     return np.sqrt(statdim), mu
 
 
@@ -138,9 +142,9 @@ def _value(V, G, Csqrt):
 
 
 # ---------------------------------------------------------------- driver
-def gaussian_width(d, S, rho, cov, num_samples=400, restarts=4,
-                   iters=250, sign_rounds=4, batch=None, seed=0, verbose=True,
-                   max_enum=256):
+def full_NSP(d, S, rho, cov, num_samples=400, restarts=4,
+             iters=250, sign_rounds=4, batch=None, seed=0, verbose=True,
+             max_enum=256):
     S = np.asarray(sorted(S), dtype=int)
     Sc = np.setdiff1d(np.arange(d), S)
     s = len(S)
@@ -198,7 +202,7 @@ def gaussian_width(d, S, rho, cov, num_samples=400, restarts=4,
               f"stat.dim ~ {(v**2).mean():.2f}")
     return v.mean(), se, v
 
-def diag_sampling(d, S, rho, c, num_samples=20000, seed=0, batch=5000):
+def diag_sampling_NSP(d, S, rho, c, num_samples=20000, seed=0, batch=5000):
     """Exact per-sample width for DIAGONAL covariance c (length-d vector).
     No sign enumeration, no iterative solver."""
     S = np.asarray(sorted(S)); Sc = np.setdiff1d(np.arange(d), S)
@@ -224,7 +228,7 @@ def diag_sampling(d, S, rho, c, num_samples=20000, seed=0, batch=5000):
     v = np.concatenate(out)
     return v.mean(), v.std(ddof=1)/np.sqrt(len(v)), v
 
-def descent_cone_statdim(d, s):
+def statdim_descent_cone(d, s):
     """Exact statistical dimension of the l1 descent cone at an s-sparse vector,
     under an isotropic Gaussian:  min_tau s(1+tau^2) + (d-s) E[(|g|-tau)_+^2].
 
@@ -246,10 +250,10 @@ if __name__ == "__main__":
     for tag, c in [('c = 1 (isotropic)', np.ones(d)),
                    ('c geometric 1..100', np.geomspace(1,100,d)),
                    ('c random lognormal', np.exp(rng.standard_normal(d)))]:
-        m, se, v = diag_sampling(d, range(s), 1.0, c, num_samples=40000, seed=4)
+        m, se, v = diag_sampling_NSP(d, range(s), 1.0, c, num_samples=40000, seed=4)
         dmc = (v**2).mean()
-        bnd, mus = statdim_bound(d, range(s), 1.0, c)
+        bnd, mus = statdim_bound_NSP(d, range(s), 1.0, c)
         print(f"{tag:22s} {m:9.4f} {np.sqrt(dmc):10.4f} {np.sqrt(bnd):12.4f} "
               f"{100*(np.sqrt(bnd)/np.sqrt(dmc)-1):6.2f}%")
     print("\nisotropic asymptotic check   2s log(d/s) =", round(2*s*np.log(d/s),2))
-    print("analytic bound               =", round(statdim_bound(d,range(s),1.0,np.ones(d))[0],2))
+    print("analytic bound               =", round(statdim_bound_NSP(d,range(s),1.0,np.ones(d))[0],2))

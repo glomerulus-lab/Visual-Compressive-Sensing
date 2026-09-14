@@ -42,7 +42,7 @@ from structured_random_features.src.models.weights import V1_covariance_matrix
 
 from .plots.paper_plots import process_image, extract_patches, run_selected_patches
 from .plots.exp_constants import CELL_SIZE, BLOB_SIZE, PATCH_SIZE, IMAGE_FILE
-from .gaussian_width import diag_analytic, gaussian_width, descent_cone_statdim
+from .gaussian_width import diag_analytic_NSP, full_NSP, statdim_descent_cone
 
 # Local copies of the small helpers in `test_theory`; that module is a script
 # that runs its whole experiment at import time, so it cannot be imported here.
@@ -79,7 +79,7 @@ def num(x, fmt=".4e"):
 
 
 PATCH_IDX = 58
-SPARSITY = 40
+SPARSITY = 30
 N_OBS_LIST = [40, 50, 60, 70, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260]
 RHO = 1.0                 # l1 descent cone / NSP constant for exact recovery
 ALG = 'bp'
@@ -156,21 +156,40 @@ def v1_covariance_dct(patch_shape, cell_size, blob_size, center):
     Qdct = dctn(Qpix.T.reshape(d, patch_shape[0], patch_shape[1]),
                 norm='ortho', axes=[1, 2]).reshape(d, d).T
     cov = (Qdct * L) @ Qdct.T
-    return cov, L
 
-def compute_theory(d, S, rho, L, cov_V1, num_samples, restarts, iters, sign_rounds):
-    """Statistical dimension predictions for the three covariance models."""
+    # Two diagonal surrogates, BOTH indexed by DCT coordinate so they can be
+    # combined with a support S that lives in DCT coordinates:
+    #   var  - the per-coordinate variances diag(cov); same marginals as V1,
+    #          correlations discarded.
+    #   spec - the actual V1 spectrum L, assigned to DCT coordinates in order
+    #          of their variance rank, so the diagonal matrix has exactly V1's
+    #          eigenvalues.  (L on its own is indexed by eigenvalue rank, NOT
+    #          by DCT coordinate -- pairing it directly with a DCT support
+    #          mixes two different bases.)
+    var = np.diag(cov).copy()
+    rank = np.argsort(np.argsort(var)[::-1])   # rank[j] = variance rank of coord j
+    spec = L[rank]
+    return cov, var, spec
+
+def compute_theory(d, S, rho, cov_var, cov_spec, cov_V1,
+                   num_samples, restarts, iters, sign_rounds):
+    """Statistical dimension predictions for the covariance models.
+
+    `cov_var` and `cov_spec` must be indexed by DCT coordinate, matching S.
+    """
     preds = {}
 
-    w_iso, _ = diag_analytic(d, S, rho, np.ones(d))
+    w_iso, _ = diag_analytic_NSP(d, S, rho, np.ones(d))
     preds['isotropic'] = {'width': w_iso, 'statdim': w_iso ** 2, 'se': 0.0}
 
-    # diag_analytic is scale invariant in c, but guard against exact zeros
-    spectrum = np.maximum(L, L.max() * 1e-12)
-    w_diag, _ = diag_analytic(d, S, rho, spectrum)
-    preds['V1 diagonal'] = {'width': w_diag, 'statdim': w_diag ** 2, 'se': 0.0}
+    # diag_analytic_NSP is scale invariant in c, but guard against exact zeros
+    w_spec, _ = diag_analytic_NSP(d, S, rho, np.maximum(cov_spec, cov_spec.max() * 1e-12))
+    preds['V1 diag (spectrum)'] = {'width': w_spec, 'statdim': w_spec ** 2, 'se': 0.0}
 
-    w_full, se_full, samples = gaussian_width(
+    w_var, _ = diag_analytic_NSP(d, S, rho, np.maximum(cov_var, cov_var.max() * 1e-12))
+    preds['V1 diag (variances)'] = {'width': w_var, 'statdim': w_var ** 2, 'se': 0.0}
+
+    w_full, se_full, samples = full_NSP(
         d, S, rho, cov_V1, num_samples=num_samples, restarts=restarts,
         iters=iters, sign_rounds=sign_rounds, verbose=False)
     # E[w^2] is the statistical dimension; w^2 is a (slightly low) proxy
@@ -219,9 +238,10 @@ def plot_sparse_patch(patch, sparse_patch, s, filename):
 def plot_results(n_obs_list, success, preds, filename):
     colors = {'Pixel': '#FF6F00', 'Gaussian': '#43A047', 'V1': '#2196F3'}
     theory_style = {'isotropic': ('#43A047', '--'),
-                    'V1 diagonal': ('#1565C0', ':'),
+                    'V1 diag (spectrum)': ('#1565C0', ':'),
+                    'V1 diag (variances)': ('#7E57C2', ':'),
                     'V1 full': ('#2196F3', '-.'),
-                    'descent cone (ref)': ('#757575', '--')}
+                    'descent cone': ('#757575', '--')}
 
     plt.figure(figsize=(8, 5))
     for method in METHODS:
@@ -301,12 +321,12 @@ def main():
 
     # --- theory -------------------------------------------------------------
     header("Gaussian width / statistical dimension")
-    cov_V1, L = v1_covariance_dct(dim, CELL_SIZE, BLOB_SIZE, center)
-    preds = compute_theory(d, S, RHO, L, cov_V1,
+    cov_V1, cov_var, cov_spec = v1_covariance_dct(dim, CELL_SIZE, BLOB_SIZE, center)
+    preds = compute_theory(d, S, RHO, cov_var, cov_spec, cov_V1,
                            num_samples, restarts, iters, sign_rounds)
 
-    preds['descent cone (ref)'] = {
-        'statdim': descent_cone_statdim(d, S.size), 'width': np.nan, 'se': 0.0}
+    preds['descent cone'] = {
+        'statdim': statdim_descent_cone(d, S.size), 'width': np.nan, 'se': 0.0}
 
     unif = 2 * SPARSITY * np.log(d / SPARSITY) + (5 / 4) * SPARSITY
     section("Predicted thresholds")
