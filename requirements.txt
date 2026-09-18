@@ -10,6 +10,7 @@ gdown
 scikit-image
 scikit-learn
 dask
+distributed
 jupyter
 pandas
 seaborn
