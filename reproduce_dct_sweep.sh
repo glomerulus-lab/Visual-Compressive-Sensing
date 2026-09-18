@@ -6,6 +6,7 @@
 # committed.  Reconstructed from:
 #   * the directory layout   result/dct/<image>/<observation>/
 #   * the grids recorded in  {True,False}_hyperparam.txt
+#   * the num_cell/filter_dim pairing in the consolidated {V1,Pixel,Gaussian}.csv
 #   * the save-name logic in src/hyperparam_sweep_filter.py (run_sweep) and
 #     src/utility.py (data_save_path)
 #
@@ -20,29 +21,27 @@
 #   `rep` is not a flag -- run_sweep hardcodes rep = np.arange(10), which is why
 #   every log shows [0 1 2 3 4 5 6 7 8 9].
 #
-# KNOWN GAPS (see below) -- as of this writing NONE of these commands run:
+#   -filter_dim scaled with num_cells:  8-32 -> 8,  32-128 -> 16,  128-512 -> 32.
+#   The .txt logs only record filter_dim for the third wave (the parameter was
+#   added partway through), but the consolidated CSVs pair num_cell with
+#   filter_dim exactly this way in all 12 image/observation directories.
 #
-#   1. -fixed_weights is UNRECOVERABLE.  It is not a swept column, so it never
-#      reaches the hyperparam log, and it does not affect the filenames.  It is
-#      omitted here (argparse default False).  If the original V1 runs used
-#      fixed weights, that flag is missing from all 12 V1 commands.
-#
-#   2. `distributed` is not installed.  requirements.txt lists `dask`, but
-#      hyperparam_sweep_filter.py needs dask[distributed] for Client/progress.
-#          uv add distributed
-#
-#   3. The V1 path is BROKEN.  run_sim_V1_dct passes sparse_freq= to
-#      large_img_experiment (src/compress_sensing.py:580), whose parameter is
-#      now named blob_size -- it raises TypeError immediately.  All 12 V1
-#      commands are dead until that call is renamed.  pixel/gaussian are fine.
+# ONE FLAG IS UNRECOVERABLE
+#   -fixed_weights is not a swept column, so it never reaches the hyperparam log,
+#   and it does not affect the filenames.  It is omitted here (argparse default
+#   False).  If the original V1 runs used fixed weights, that flag is missing
+#   from all 12 V1 commands.
 #
 # WARNING: running this APPENDS to result/dct/.  Each run writes a new
 # timestamped {color}_param_<ctime>.csv and appends to {color}_hyperparam.txt,
-# so existing data is not overwritten, but the directories do accumulate.
+# so existing per-run data is not overwritten, but the directories accumulate.
+# It does NOT touch the consolidated {V1,Pixel,Gaussian}.csv files -- run
+# consolidate_results.py --merge for that.
 # Set DRY_RUN=1 to print the commands without executing them.
 #
 # Usage:   ./reproduce_dct_sweep.sh
 #          DRY_RUN=1 ./reproduce_dct_sweep.sh
+#          PYTHON=.venv/bin/python ./reproduce_dct_sweep.sh
 
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -58,118 +57,118 @@ PY="${PYTHON:-python}"
 
 
 # ---------------------------------------------------------------- baboon.png  [color (RGB)]
-# pixel, num_cells 8-32
+# pixel, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name baboon.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32 -color
-# pixel, num_cells 32-128
+    -img_name baboon.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8 -color
+# pixel, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name baboon.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32 -color
-# pixel, num_cells 128-512
+    -img_name baboon.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16 -color
+# pixel, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name baboon.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32 -color
-# gaussian, num_cells 8-32
+# gaussian, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name baboon.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32 -color
-# gaussian, num_cells 32-128
+    -img_name baboon.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8 -color
+# gaussian, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name baboon.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32 -color
-# gaussian, num_cells 128-512
+    -img_name baboon.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16 -color
+# gaussian, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name baboon.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32 -color
-# V1, num_cells 8-32
+# V1, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name baboon.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8 -color
-# V1, num_cells 32-128
+    -img_name baboon.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8 -cell_size 50 100 200 -sparse_freq 2 4 6 8 -color
+# V1, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name baboon.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8 -color
-# V1, num_cells 128-512
+    -img_name baboon.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16 -cell_size 50 100 200 -sparse_freq 2 4 6 8 -color
+# V1, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name baboon.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8 -color
 
 # ---------------------------------------------------------------- barbara.bmp  [grayscale]
-# pixel, num_cells 8-32
+# pixel, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name barbara.bmp -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32
-# pixel, num_cells 32-128
+    -img_name barbara.bmp -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8
+# pixel, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name barbara.bmp -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32
-# pixel, num_cells 128-512
+    -img_name barbara.bmp -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16
+# pixel, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name barbara.bmp -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32
-# gaussian, num_cells 8-32
+# gaussian, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name barbara.bmp -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32
-# gaussian, num_cells 32-128
+    -img_name barbara.bmp -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8
+# gaussian, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name barbara.bmp -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32
-# gaussian, num_cells 128-512
+    -img_name barbara.bmp -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16
+# gaussian, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name barbara.bmp -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32
-# V1, num_cells 8-32
+# V1, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name barbara.bmp -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8
-# V1, num_cells 32-128
+    -img_name barbara.bmp -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8 -cell_size 50 100 200 -sparse_freq 2 4 6 8
+# V1, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name barbara.bmp -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8
-# V1, num_cells 128-512
+    -img_name barbara.bmp -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16 -cell_size 50 100 200 -sparse_freq 2 4 6 8
+# V1, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name barbara.bmp -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8
 
 # ---------------------------------------------------------------- boat.png  [grayscale]
-# pixel, num_cells 8-32
+# pixel, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name boat.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32
-# pixel, num_cells 32-128
+    -img_name boat.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8
+# pixel, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name boat.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32
-# pixel, num_cells 128-512
+    -img_name boat.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16
+# pixel, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name boat.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32
-# gaussian, num_cells 8-32
+# gaussian, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name boat.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32
-# gaussian, num_cells 32-128
+    -img_name boat.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8
+# gaussian, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name boat.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32
-# gaussian, num_cells 128-512
+    -img_name boat.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16
+# gaussian, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name boat.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32
-# V1, num_cells 8-32
+# V1, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name boat.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8
-# V1, num_cells 32-128
+    -img_name boat.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8 -cell_size 50 100 200 -sparse_freq 2 4 6 8
+# V1, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name boat.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8
-# V1, num_cells 128-512
+    -img_name boat.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16 -cell_size 50 100 200 -sparse_freq 2 4 6 8
+# V1, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name boat.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8
 
 # ---------------------------------------------------------------- fruits.png  [color (RGB)]
-# pixel, num_cells 8-32
+# pixel, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name fruits.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32 -color
-# pixel, num_cells 32-128
+    -img_name fruits.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8 -color
+# pixel, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name fruits.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32 -color
-# pixel, num_cells 128-512
+    -img_name fruits.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16 -color
+# pixel, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name fruits.png -method dct -observation pixel -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32 -color
-# gaussian, num_cells 8-32
+# gaussian, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name fruits.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32 -color
-# gaussian, num_cells 32-128
+    -img_name fruits.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8 -color
+# gaussian, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name fruits.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32 -color
-# gaussian, num_cells 128-512
+    -img_name fruits.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16 -color
+# gaussian, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name fruits.png -method dct -observation gaussian -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32 -color
-# V1, num_cells 8-32
+# V1, num_cells 8-32, filter_dim 8
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name fruits.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8 -color
-# V1, num_cells 32-128
+    -img_name fruits.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 8 14 20 26 32 -filter_dim 8 -cell_size 50 100 200 -sparse_freq 2 4 6 8 -color
+# V1, num_cells 32-128, filter_dim 16
 run "$PY" -m src.hyperparam_sweep_filter \
-    -img_name fruits.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8 -color
-# V1, num_cells 128-512
+    -img_name fruits.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 32 56 80 104 128 -filter_dim 16 -cell_size 50 100 200 -sparse_freq 2 4 6 8 -color
+# V1, num_cells 128-512, filter_dim 32
 run "$PY" -m src.hyperparam_sweep_filter \
     -img_name fruits.png -method dct -observation V1 -alpha_list 0.01 0.1 1 10 -num_cells 128 224 320 416 512 -filter_dim 32 -cell_size 50 100 200 -sparse_freq 2 4 6 8 -color
 
