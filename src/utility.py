@@ -82,6 +82,33 @@ def fig_save_path(img_nm, method, observation, save_nm):
     #TODO: add timestamp onto save_nm autometically
     return os.path.join(fig_path, "{save_nm}.svg".format(save_nm = save_nm))
 
+def _reserve_unique(path):
+    """Atomically claim `path`, or the next free `<stem>_<n><ext>`.
+
+    time.ctime() has only one-second resolution and the name is built after the
+    sweep finishes, so two runs completing in the same second resolved to the
+    same file and the second silently overwrote the first. os.open with
+    O_CREAT|O_EXCL makes the claim atomic, so this holds even for sweeps running
+    concurrently in separate processes -- unlike an exists()-then-write check,
+    where both callers can see the name free.
+
+    The reserved file is created empty; the caller overwrites it. In the common
+    case no collision occurs and the returned name is exactly what this function
+    has always produced.
+    """
+    stem, ext = os.path.splitext(path)
+    candidate, n = path, 1
+    while True:
+        try:
+            fd = os.open(candidate, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+        except FileExistsError:
+            n += 1
+            candidate = f"{stem}_{n}{ext}"
+        else:
+            os.close(fd)
+            return candidate
+
+
 def data_save_path(img_nm, method, observation, save_nm): 
     ''' 
     Gives absolute paths for collected data to be saved to have organized folder
@@ -120,8 +147,8 @@ def data_save_path(img_nm, method, observation, save_nm):
     img_nm = img_nm.split('.')[0]
     save_nm = save_nm.replace(" ", "_")
     
-    match = re.findall("_hyperparam$", save_nm)
-    if (match) : 
+    is_hyperparam = bool(re.findall("_hyperparam$", save_nm))
+    if (is_hyperparam) : 
         save_nm = save_nm + '.txt'
     else :
         if (save_nm[-1] != "_") :
@@ -132,7 +159,9 @@ def data_save_path(img_nm, method, observation, save_nm):
     result_path = os.path.join(root, f"result/{method}/{img_nm}/{observation}")
     Path(result_path).mkdir(parents=True, exist_ok = True)
     
-    return os.path.join(result_path, save_nm)
+    full_path = os.path.join(result_path, save_nm)
+    # The .txt log is appended to on purpose, so only the data file is claimed.
+    return full_path if is_hyperparam else _reserve_unique(full_path)
 
 def compute_zero_padding_dimension(n, filter_n):
     '''

@@ -175,13 +175,14 @@ def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
     # Saves hyperparameter used for computing this data to txt file format
     hyperparam_track = data_save_path(image_nm, method, observation,
                                       str(f'{color}_hyperparam'))
-    f = open(hyperparam_track, 'a+')
     hyperparam_list = list(zip(search_df.columns, search_list))
-    f.write(f"{param_path.split('/')[-1]}\n")
-    for hyperparam in hyperparam_list :
-        f.write(f"   {hyperparam[0]}: {hyperparam[1]}\n")
-    f.write("\n\n")
-    f.close()
+    entry = f"{param_path.split('/')[-1]}\n"
+    entry += "".join(f"   {name}: {values}\n" for name, values in hyperparam_list)
+    entry += "\n\n"
+    # Built as one string and written once: a sequence of small writes from
+    # concurrent sweeps can interleave mid-entry in the shared log.
+    with open(hyperparam_track, 'a+') as f:
+        f.write(entry)
 
 # run sim for non-v1 dwt
 def run_sim_dwt(method, observation, color, dwt_type,
