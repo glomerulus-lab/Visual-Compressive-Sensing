@@ -84,7 +84,7 @@ def show_reconstruction_error(img_arr, reconst, method,
 
 
 def error_vs_num_cell(img, method, pixel_file=None, gaussian_file=None,
-                          V1_file=None, data_grab = 'auto') :
+                          V1_file=None, data_grab = 'auto', ax = None) :
     ''' 
     Generate figure that compares which method gives the best minimum error
     
@@ -166,9 +166,10 @@ def error_vs_num_cell(img, method, pixel_file=None, gaussian_file=None,
             V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'])])
 
     #    print("V1: ", V1_data)
-    sns.lineplot(V1_data, x='num_cell', y='error_y', errorbar='pi', label='V1')
-    sns.lineplot(pixel_data, x='num_cell', y='error_y', errorbar='pi', label='pixel')
-    sns.lineplot(gaussian_data, x='num_cell', y='error_y', errorbar='pi', label='Gaussian')
+    ax = plt.gca() if ax is None else ax
+    sns.lineplot(V1_data, x='num_cell', y='error_y', errorbar='pi', label='V1', ax=ax)
+    sns.lineplot(pixel_data, x='num_cell', y='error_y', errorbar='pi', label='pixel', ax=ax)
+    sns.lineplot(gaussian_data, x='num_cell', y='error_y', errorbar='pi', label='Gaussian', ax=ax)
     #print(V1_data)
     img = img.split('.')[0].capitalize()
 
@@ -179,21 +180,20 @@ def error_vs_num_cell(img, method, pixel_file=None, gaussian_file=None,
     #legend_size = 30 # legend text
     dim = eval(filter_dim)[0]
 
-    plt.ylabel('Error', fontsize=labelsize)
-    plt.xlabel('$n$', fontsize=labelsize)
-    plt.xticks(fontsize=ticksize)
-    plt.yticks(fontsize=ticksize)
+    ax.set_ylabel('Error', fontsize=labelsize)
+    ax.set_xlabel('$n$', fontsize=labelsize)
+    ax.tick_params(axis='both', labelsize=ticksize)
 
-    plt.title(f'{img}', fontsize=titlesize)
-    plt.legend(fontsize=legend_size)
-    fig = plt.gcf()
+    ax.set_title(f'{img}', fontsize=titlesize)
+    ax.legend(fontsize=legend_size)
+    fig = ax.get_figure()
     width = 18.5
     height = 10.5
-    plt.tight_layout()
+    fig.tight_layout()
     #    fig.set_size_inches(width, height)
         
 def error_vs_filter_dim(img, method, pixel_file=None, gaussian_file=None,
-                          V1_file=None, data_grab = 'auto') :
+                          V1_file=None, data_grab = 'auto', ax = None) :
     ''' 
     Generate figure that compares which method gives the best minimum error
     
@@ -278,9 +278,10 @@ def error_vs_filter_dim(img, method, pixel_file=None, gaussian_file=None,
             V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'])])
 
             
-    sns.lineplot(V1_data, x='filter_dim', y='error_y', errorbar='pi', label='V1')
-    sns.lineplot(pixel_data, x='filter_dim', y='error_y', errorbar='pi', label='pixel')
-    sns.lineplot(gaussian_data, x='filter_dim', y='error_y', errorbar='pi', label='Gaussian')
+    ax = plt.gca() if ax is None else ax
+    sns.lineplot(V1_data, x='filter_dim', y='error_y', errorbar='pi', label='V1', ax=ax)
+    sns.lineplot(pixel_data, x='filter_dim', y='error_y', errorbar='pi', label='pixel', ax=ax)
+    sns.lineplot(gaussian_data, x='filter_dim', y='error_y', errorbar='pi', label='Gaussian', ax=ax)
     
     img = img.split('.')[0].capitalize()
 
@@ -290,22 +291,22 @@ def error_vs_filter_dim(img, method, pixel_file=None, gaussian_file=None,
     #titlesize = 20 #title
     #legend_size = 20 # legend text
     
-    plt.xticks(fontsize=ticksize)
-    plt.yticks(fontsize=ticksize)
+    ax.tick_params(axis='both', labelsize=ticksize)
 
-    plt.ylabel('Error', fontsize=labelsize)
-    plt.xlabel('Patch dimension', fontsize=labelsize)
-    plt.title(f'{img}', fontsize=titlesize)
-    plt.legend(fontsize=legend_size)
-    fig = plt.gcf()
-    ax = plt.gca()
+    ax.set_ylabel('Error', fontsize=labelsize)
+    ax.set_xlabel('Patch dimension', fontsize=labelsize)
+    ax.set_title(f'{img}', fontsize=titlesize)
+    ax.legend(fontsize=legend_size)
+    fig = ax.get_figure()
+    ax.set_xticks(range(3))
     ax.set_xticklabels(['8x8', '16x16', '32x32'])
     width = 18.5
     height = 10.5
-    plt.tight_layout()
+    fig.tight_layout()
     #fig.set_size_inches(width, height)
     
-def error_vs_alpha(img, method, pixel_file, gaussian_file, V1_file, save = False):
+def error_vs_alpha(img, method, pixel_file, gaussian_file, V1_file, save = False,
+                   ax = None):
     ''' 
     Generate figure that compares various alpha LASSO penalty and how it affects
     the error of the reconstruction among three different observations. 
@@ -389,9 +390,10 @@ def error_vs_alpha(img, method, pixel_file, gaussian_file, V1_file, save = False
         elif method == 'dct':
             V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'])])
             
-    sns.lineplot(V1_data, x='alp', y='error_y', errorbar='pi', label='V1')
-    sns.lineplot(pixel_data, x='alp', y='error_y', errorbar='pi', label='pixel')
-    sns.lineplot(gaussian_data, x='alp', y='error_y', errorbar='pi', label='Gaussian')
+    ax = plt.gca() if ax is None else ax
+    sns.lineplot(V1_data, x='alp', y='error_y', errorbar='pi', label='V1', ax=ax)
+    sns.lineplot(pixel_data, x='alp', y='error_y', errorbar='pi', label='pixel', ax=ax)
+    sns.lineplot(gaussian_data, x='alp', y='error_y', errorbar='pi', label='Gaussian', ax=ax)
 
     # set size for each font
     #ticksize = 20 # x, y ticks
@@ -400,22 +402,21 @@ def error_vs_alpha(img, method, pixel_file, gaussian_file, V1_file, save = False
     #legend_size = 20 # legend text
     dim = eval(filter_dim)[0]
 
-    plt.xticks(fontsize=ticksize)
-    plt.yticks(fontsize=ticksize)
-    plt.xlabel(r'Penalty $\alpha$', fontsize=labelsize)
-    plt.ylabel('Error', fontsize = labelsize)
+    ax.tick_params(axis='both', labelsize=ticksize)
+    ax.set_xlabel(r'Penalty $\alpha$', fontsize=labelsize)
+    ax.set_ylabel('Error', fontsize = labelsize)
     img = img.split('.')[0].capitalize()
-    plt.title(f'{img}', fontsize=titlesize)
+    ax.set_title(f'{img}', fontsize=titlesize)
 
-    plt.legend(fontsize=legend_size)
+    ax.legend(fontsize=legend_size)
 
-    fig = plt.gcf()
+    fig = ax.get_figure()
     width = 18.5
     height = 10.5
     #fig.set_size_inches(width, height)
     
-    plt.xscale('log')
-    plt.tight_layout()
+    ax.set_xscale('log')
+    fig.tight_layout()
     
 def colorbar_live_reconst(method, img_name, observation, color, dwt_type, level,
                           alpha, num_cells, cell_size, sparse_freq, fixed_weights,

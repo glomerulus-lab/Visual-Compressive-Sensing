@@ -404,8 +404,12 @@ def process_result_data_new(img_file, method, target_param, pixel_file=None,
         sys.exit(0)
         
     data = load_dataframe_new(img_nm, method, pixel_file, gaussian_file, V1_file)
-    data['blob_size'] = data['blob_size'].fillna(0)
-    data['cell_size'] = data['cell_size'].fillna(0)
+    # The V1 frequency parameter is written as sparse_freq by the sweep and was
+    # renamed blob_size downstream; only one of the two is present depending on
+    # when the data was produced, and pixel/gaussian rows carry neither.
+    for col in ('blob_size', 'sparse_freq', 'cell_size'):
+        if col in data.columns:
+            data[col] = data[col].fillna(0)
     return data
 
 
