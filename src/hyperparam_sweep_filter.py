@@ -22,7 +22,8 @@ import pywt
 
 
 def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
-              num_cell, cell_size, sparse_freq, fixed_weights, filter_dim):
+              num_cell, cell_size, sparse_freq, fixed_weights, filter_dim,
+              num_reps=10):
     ''' 
     Generate a sweep over desired hyperparameters and saves results to a file.
     
@@ -63,10 +64,15 @@ def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
     sparse_freq : List of int
         Determines filed frequency on how frequently 
         opened and closed area would appear. Affect the data training
+
+    num_reps : int
+        Number of repetitions per hyperparameter combination. Defaults to 10,
+        the value this was hardcoded to before it became a CLI argument, so
+        omitting -num_reps reproduces the historical sweeps.
     '''
 
     delay_list = []
-    rep = np.arange(10)
+    rep = np.arange(num_reps)
     image_nm = img.split('.')[0]
     img_arr = process_image(img, color)
     # call dask
@@ -414,9 +420,11 @@ def run_sim_V1_dct(method, observation, color, alpha, num_cell, cell_size,
 
 def main():
     method, img, observation, color, dwt_type, level, alpha_list, num_cell, \
-        cell_size, sparse_freq, fixed_weights, filter_dim = parse_sweep_args()
+        cell_size, sparse_freq, fixed_weights, filter_dim, num_reps = \
+        parse_sweep_args()
     run_sweep(method, img, observation, color, dwt_type, level, alpha_list,
-              num_cell, cell_size, sparse_freq, fixed_weights, filter_dim)
+              num_cell, cell_size, sparse_freq, fixed_weights, filter_dim,
+              num_reps)
 
 if __name__ == '__main__':
     main()

@@ -337,14 +337,18 @@ def parse_sweep_args():
         Determines filed frequency on how frequently 
         opened and closed area would appear. 
         Affect the data training.
+
+    num_reps : int
+        Number of repetitions per hyperparameter combination. Defaults to 10,
+        the value the sweep used to hardcode.
     '''
 
     parser = argparse.ArgumentParser(description='Create a hyperparameter sweep')
     add_sweep_args(parser)
     args = parser.parse_args()
     
-    method, img_name, observation, color, dwt_type, level, alpha_list, num_cells, cell_size, sparse_freq, fixed_weights, filter_dim = eval_sweep_args(args, parser)    
-    return method, img_name, observation, color, dwt_type, level, alpha_list, num_cells, cell_size, sparse_freq, fixed_weights, filter_dim
+    method, img_name, observation, color, dwt_type, level, alpha_list, num_cells, cell_size, sparse_freq, fixed_weights, filter_dim, num_reps = eval_sweep_args(args, parser)    
+    return method, img_name, observation, color, dwt_type, level, alpha_list, num_cells, cell_size, sparse_freq, fixed_weights, filter_dim, num_reps
 
 def add_sweep_args(parser):
     '''
@@ -399,6 +403,11 @@ def add_sweep_args(parser):
         '-alpha_list', action='store', 
         help='alpha values to use',
         metavar="ALPHAS", required=True, nargs="+")
+    parser.add_argument(
+        '-num_reps', action='store',
+        help='number of repetitions per hyperparameter combination'
+             ' (default 10)',
+        metavar='NUM_REPS', required=False, nargs=1)
     parser.add_argument(
         '-num_cells', action='store', 
         help='Method you would like to use for reconstruction',
@@ -463,6 +472,10 @@ def eval_sweep_args(args, parser):
         Determines filed frequency on how frequently 
         opened and closed area would appear. 
         Affect the data training.
+
+    num_reps : int
+        Number of repetitions per hyperparameter combination. Defaults to 10,
+        the value the sweep used to hardcode.
     '''
     
     #args = parser.parse_args()
@@ -490,6 +503,10 @@ def eval_sweep_args(args, parser):
     level = [eval(i) for i in args.level] if args.level is not None else None
     alpha_list = [eval(i) for i in args.alpha_list]
     
+    num_reps = eval(args.num_reps[0]) if args.num_reps is not None else 10
+    if not isinstance(num_reps, int) or num_reps < 1:
+        parser.error('-num_reps must be a positive integer.')
+
     num_cells = [eval(i) for i in args.num_cells]
     filter_dim = [(eval(i), eval(i)) for i in args.filter_dim]
     
@@ -498,4 +515,4 @@ def eval_sweep_args(args, parser):
     sparse_freq = [eval(i) for i in args.sparse_freq] \
         if args.sparse_freq is not None else None
     return method, img_name, observation, color, dwt_type, level, alpha_list, \
-        num_cells, cell_size, sparse_freq, fixed_weights, filter_dim
+        num_cells, cell_size, sparse_freq, fixed_weights, filter_dim, num_reps
