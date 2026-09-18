@@ -33,19 +33,24 @@ Core pipeline (all in `src/`):
   - `large_img_experiment` — the entry point for real (non-toy-sized) images. `reconstruct`/LASSO only works well on small patches, so this tiles the (optionally zero-padded) image into `filter_dim` blocks and reconstructs each block independently, optionally reusing the same weights (`fixed_weights=True`) across all blocks instead of drawing fresh random weights per block.
 - **`src/utility.py`** — path/IO helpers shared by everything else. `search_root()` walks up parent directories looking for one named `Visual-Compressive-Sensing`, so all save/load path helpers only work correctly when the repo directory keeps that name. `data_save_path`/`fig_save_path` build the canonical `result/<method>/<image>/<observation>/...` and `figures/<method>/<image>/<observation>/...` layout (see below) and create directories as needed. `process_image` loads a file from `images/`.
 - **`src/hyperparam_sweep_filter.py`** — CLI (`python -m src.hyperparam_sweep_filter ...` style, see `src/args.py` for flags) that runs a Dask-parallelized grid sweep of `large_img_experiment` over hyperparameters (alpha, num_cells, cell_size, sparse_freq, filter_dim, dwt level/type, repetitions) for one observation+method+algorithm combo, and writes results as CSV under `result/` plus a matching hyperparameter-tracking `.txt` file. `-algorithm` selects the solver (`lasso` default, plus `ridge`/`omp`/`bp`); `bp`/`omp` have no alpha penalty, so they reject `-alpha_list` and record `alp` as empty, and only `lasso` is wired into the `dwt` method.
-- **`src/figure.py`** — turns swept CSV result data (or a single live reconstruction) into plots: `colorbar_live_reconst` (side-by-side reconstruction + pixel error heatmap for one parameter set), `error_vs_num_cell`, `error_vs_alpha`, `error_vs_filter_dim` (compare pixel/gaussian/V1 curves from swept CSVs, picking the best hyperparameters per x-value). Also runnable as a CLI (see `src/args.py::parse_figure_args`).
+- **`src/figure.py`** — turns swept CSV result data (or a single live reconstruction) into plots: `colorbar_live_reconst` (side-by-side reconstruction + pixel error heatmap for one parameter set), `error_vs_num_cell`, `error_vs_alpha`, `error_vs_filter_dim` (compare pixel/gaussian/V1 curves from swept CSVs, picking the best hyperparameters per x-value). Every one takes `algorithm` (default `lasso`) to pick the `result/<algorithm>/` tree. Note the groupbys pass `dropna=False` deliberately: an unpenalised solver's `alp` column is empty, and the default would silently discard every such row. Also runnable as a CLI (see `src/args.py::parse_figure_args`).
+
+- **`sweep_figures.py`** (repo root) — builds the paper figures for one solver from its consolidated sweep CSVs; `lasso_sweep_figures.py` and `bp_sweep_figures.py` are thin drivers over it (`python lasso_sweep_figures.py`, `python bp_sweep_figures.py`). `varying_alpha` is offered only for penalised solvers. Output defaults to `figures/<algorithm>/paper_new/`.
+
+- **`lasso_dct_sweep.sh` / `bp_dct_sweep.sh`** (repo root) — the 36-run DCT sweep for each solver, same grids apart from alpha. `consolidate_results.py` (`--algorithm`) merges the per-run CSVs each produces into the consolidated `{V1,Pixel,Gaussian}.csv` the figure code reads.
 - **`src/args.py`** — all `argparse` wiring for the sweep and figure CLIs; the two CLIs share many flags but require different subsets depending on `method`/`observation`/`fig_type`.
 
 ### Data flow / on-disk layout
 
 ```
-images/                                              # source images (input)
-result/<algorithm>/<method>/<image>/<observation>/   # hyperparam sweep CSVs + hyperparameter .txt logs (output of hyperparam_sweep_filter.py)
-figures/<method>/<image>/<observation>/              # generated plots (output of figure.py)
+images/                                               # source images (input)
+result/<algorithm>/<method>/<image>/<observation>/    # hyperparam sweep CSVs + hyperparameter .txt logs (output of hyperparam_sweep_filter.py)
+figures/<algorithm>/<method>/<image>/<observation>/   # generated plots (output of figure.py)
+figures/<algorithm>/paper_new/                        # paper figures (output of <algorithm>_sweep_figures.py)
 ```
 `algorithm` ∈ {`lasso`, `bp`, ...}, `method` ∈ {`dct`, `dwt`}, `observation` ∈ {`pixel`, `gaussian`, `V1`} (V1 is upper-cased in paths, others lowercased).
 
-The `<algorithm>` level keeps each solver's sweeps in their own subtree; `data_save_path`/`load_dataframe*` default it to `lasso`, which is what every result predating basis pursuit was produced with. Note `figures/` has *no* algorithm level — the figure CLI has no `-algorithm` flag yet, so BP plots would collide with LASSO ones.
+The `<algorithm>` level keeps each solver's sweeps and figures in their own subtree. `data_save_path`/`fig_save_path`/`load_dataframe*` and the `-algorithm` flag on both CLIs all default it to `lasso`, which is what every result predating basis pursuit was produced with. Other top-level `figures/` directories (`paper/`, `paper_plots_256/`, `plot_pics/`, ...) predate the split and are not algorithm-scoped.
 
 ### `structured_random_features/`
 

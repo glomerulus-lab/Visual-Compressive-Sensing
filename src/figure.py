@@ -126,9 +126,9 @@ def error_vs_num_cell(img, method, pixel_file=None, gaussian_file=None,
     data = process_result_data_new(img, method, 'num_cell', pixel_file, gaussian_file, V1_file, algorithm)
     data = data[data['filter_dim']==filter_dim]
     if method == 'dwt':
-        mean_data = data.groupby(['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv']).mean()
+        mean_data = data.groupby(['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv'], dropna=False).mean()
     elif method == 'dct':
-        mean_data = data.groupby(['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size']).mean()
+        mean_data = data.groupby(['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'], dropna=False).mean()
         
     mean_data = mean_data.reset_index()
     #    print(mean_data)
@@ -234,9 +234,9 @@ def error_vs_filter_dim(img, method, pixel_file=None, gaussian_file=None,
     #Pre-processing data to receive
     data = process_result_data_new(img, method, 'filter_dim', pixel_file, gaussian_file, V1_file, algorithm)
     if method == 'dwt':
-        mean_data = data.groupby(['type', 'alp', 'num_cell', 'sparse_freq', 'cell_size', 'filter_dim', 'lv']).mean()
+        mean_data = data.groupby(['type', 'alp', 'num_cell', 'sparse_freq', 'cell_size', 'filter_dim', 'lv'], dropna=False).mean()
     elif method == 'dct':
-        mean_data = data.groupby(['type', 'alp', 'num_cell', 'sparse_freq', 'cell_size', 'filter_dim']).mean()
+        mean_data = data.groupby(['type', 'alp', 'num_cell', 'sparse_freq', 'cell_size', 'filter_dim'], dropna=False).mean()
     mean_data = mean_data.reset_index()
     # optimize alp value for each num cell and type
     # limit data to those alp values
@@ -355,9 +355,9 @@ def error_vs_alpha(img, method, pixel_file, gaussian_file, V1_file, save = False
     data = data[data['num_cell'] == fixed_cell]
     data = data[data['filter_dim'] == filter_dim]
     if method == 'dwt':
-        mean_data = data.groupby(['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv']).mean()
+        mean_data = data.groupby(['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv'], dropna=False).mean()
     elif method == 'dct':
-        mean_data = data.groupby(['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size']).mean()
+        mean_data = data.groupby(['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'], dropna=False).mean()
     mean_data = mean_data.reset_index()
     #print(mean_data)
 
@@ -422,7 +422,7 @@ def error_vs_alpha(img, method, pixel_file, gaussian_file, V1_file, save = False
     
 def colorbar_live_reconst(method, img_name, observation, color, dwt_type, level,
                           alpha, num_cells, cell_size, sparse_freq, fixed_weights,
-                          filter_dim):
+                          filter_dim, algorithm='lasso'):
     '''
     Generates a reconstruction and error figure for desired parameters.
 
@@ -475,7 +475,7 @@ def colorbar_live_reconst(method, img_name, observation, color, dwt_type, level,
     print(f"Image \"{img_name}\" loaded.") 
     reconst = large_img_experiment(
         img_arr, num_cells, cell_size, sparse_freq, filter_dim, alpha, method,
-        observation, level, dwt_type, fixed_weights, color) 
+        observation, level, dwt_type, fixed_weights, color, algorithm) 
     show_reconstruction_error(img_arr, reconst, method, observation,
                    num_cells, img_name.split('.')[0])
 
@@ -483,28 +483,31 @@ def main():
     fig_type, args, save = parse_figure_args()
     if fig_type == 'colorbar' :
       method, img_name, observation, color, dwt_type, level, alpha, num_cells,\
-          cell_size, sparse_freq, fixed_weights, filter_dim = args
+          cell_size, sparse_freq, fixed_weights, filter_dim, algorithm = args
       colorbar_live_reconst(
           method, img_name, observation, color, dwt_type, level,
-          alpha, num_cells, cell_size, sparse_freq, fixed_weights, filter_dim)
+          alpha, num_cells, cell_size, sparse_freq, fixed_weights, filter_dim,
+          algorithm)
       if save:
-          save_reconstruction_error(img_name, method, observation)
+          save_reconstruction_error(img_name, method, observation, algorithm)
     elif fig_type == 'num_cell':
-        img_name, method, pixel, gaussian, v1, data_grab = args
+        img_name, method, pixel, gaussian, v1, data_grab, algorithm = args
         error_vs_num_cell(img_name, method, pixel,
-                              gaussian, v1, data_grab)
+                              gaussian, v1, data_grab, algorithm=algorithm)
         if save:
-            save_num_cell(img_name, pixel, gaussian, v1, method)
+            save_num_cell(img_name, pixel, gaussian, v1, method, algorithm)
     elif fig_type == 'alpha':
-        img_name, method, pixel, gaussian, v1, data_grab = args
-        error_vs_alpha(img_name, method, pixel, gaussian, v1, data_grab)
+        img_name, method, pixel, gaussian, v1, data_grab, algorithm = args
+        error_vs_alpha(img_name, method, pixel, gaussian, v1, data_grab,
+                       algorithm=algorithm)
         if save:
-            save_alpha(img_name, pixel, gaussian, v1, method)
+            save_alpha(img_name, pixel, gaussian, v1, method, algorithm)
     elif fig_type == 'filter_dim':
-        img_name, method, pixel, gaussian, v1, data_grab = args
-        error_vs_filter_dim(img_name, method, pixel, gaussian, v1, data_grab)
+        img_name, method, pixel, gaussian, v1, data_grab, algorithm = args
+        error_vs_filter_dim(img_name, method, pixel, gaussian, v1, data_grab,
+                            algorithm=algorithm)
         if save:
-            save_filter_dim(img_name, pixel, gaussian, v1, method)
+            save_filter_dim(img_name, pixel, gaussian, v1, method, algorithm)
     
     if not save:
         plt.show()

@@ -34,7 +34,7 @@ def search_root():
         root = Path(os.path.abspath(back_path))
     return root
 
-def fig_save_path(img_nm, method, observation, save_nm):
+def fig_save_path(img_nm, method, observation, save_nm, algorithm='lasso'):
     ''' 
     Gives absolute paths for generated figures to be saved to have organized 
     folder structure. Figure will be saved under figure directory and its format
@@ -56,6 +56,10 @@ def fig_save_path(img_nm, method, observation, save_nm):
         
     save_nm : String
         Name of the file that it will be saved to
+
+    algorithm : String
+        Solver the figure's data was reconstructed with, which selects the
+        figures/<algorithm>/ subtree to write into. Defaults to 'lasso'.
         
     Returns
     ----------
@@ -77,7 +81,8 @@ def fig_save_path(img_nm, method, observation, save_nm):
         save_nm = save_nm + "_".join(str.split(time.ctime().replace(":", "_")))
     
         
-    fig_path = os.path.join(root, f"figures/{method}/{img_nm}/{observation}")
+    fig_path = os.path.join(
+        root, f"figures/{algorithm.lower()}/{method}/{img_nm}/{observation}")
     Path(fig_path).mkdir(parents=True, exist_ok = True)
     #TODO: add timestamp onto save_nm autometically
     return os.path.join(fig_path, "{save_nm}.svg".format(save_nm = save_nm))
@@ -431,7 +436,8 @@ def process_result_data_new(img_file, method, target_param, pixel_file=None,
     return data
 
 
-def save_reconstruction_error(img_name, method, observation):
+def save_reconstruction_error(img_name, method, observation,
+                              algorithm='lasso'):
     '''
     Saves the reconstruction error figure to a filepath built from params 
 
@@ -446,12 +452,18 @@ def save_reconstruction_error(img_name, method, observation):
 
     observation : String
         Observation technique to be used for sampling image data.
+
+    algorithm : String
+        Solver the data was reconstructed with, selecting the
+        figures/<algorithm>/ subtree. Defaults to 'lasso'.
     '''
-    outfile = fig_save_path(img_name, method, observation, "colorbar")
+    outfile = fig_save_path(img_name, method, observation, "colorbar",
+                            algorithm)
     plt.savefig(outfile, dpi = 300, bbox_inches = "tight")
     print(f'saving reconstruction error figure to {outfile}')
 
-def save_num_cell(img_name, pixel_file, gaussian_file, V1_file, method):
+def save_num_cell(img_name, pixel_file, gaussian_file, V1_file, method,
+                  algorithm='lasso'):
     '''
     Saves the num cell vs error figure to a filepath built from params 
 
@@ -472,15 +484,21 @@ def save_num_cell(img_name, pixel_file, gaussian_file, V1_file, method):
     method : String
         Basis the data file was worked on. 
         Currently supports dct and dwt (discrete cosine/wavelet transform).
+
+    algorithm : String
+        Solver the data was reconstructed with, selecting the
+        figures/<algorithm>/ subtree. Defaults to 'lasso'.
     '''
     # for its save name, the name of file order is pixel -> gaussian -> V1 
     save_name = pixel_file.split('.')[0] + '_' + \
         gaussian_file.split('.')[0] + '_' + V1_file.split('.')[0]
-    save_path = fig_save_path(img_name, method, 'num_cell_error', save_name)
+    save_path = fig_save_path(img_name, method, 'num_cell_error', save_name,
+                              algorithm)
     plt.savefig(save_path, dpi = 200)
     print(f'saving error vs num_cell figure to {save_path}')
 
-def save_alpha(img_name, pixel_file, gaussian_file, V1_file, method):
+def save_alpha(img_name, pixel_file, gaussian_file, V1_file, method,
+               algorithm='lasso'):
     '''
     Saves the alpha vs error figure to a filepath built from params 
 
@@ -501,15 +519,21 @@ def save_alpha(img_name, pixel_file, gaussian_file, V1_file, method):
     method : String
         Basis the data file was worked on. 
         Currently supports dct and dwt (discrete cosine/wavelet transform).
+
+    algorithm : String
+        Solver the data was reconstructed with, selecting the
+        figures/<algorithm>/ subtree. Defaults to 'lasso'.
     '''
     # for its save name, the name of file order is pixel -> gaussian -> V1 
     save_name = pixel_file.split('.')[0] + '_' + \
         gaussian_file.split('.')[0] + '_' + V1_file.split('.')[0]
-    save_path = fig_save_path(img_name, method, 'alpha_error', save_name)
+    save_path = fig_save_path(img_name, method, 'alpha_error', save_name,
+                              algorithm)
     plt.savefig(save_path, dpi = 200)
     print(f'saving error vs alpha figure to {save_path}')
 
-def save_filter_dim(img_name, pixel_file, gaussian_file, V1_file, method):
+def save_filter_dim(img_name, pixel_file, gaussian_file, V1_file, method,
+                    algorithm='lasso'):
     '''
     Saves the alpha vs error figure to a filepath built from params 
 
@@ -530,11 +554,16 @@ def save_filter_dim(img_name, pixel_file, gaussian_file, V1_file, method):
     method : String
         Basis the data file was worked on. 
         Currently supports dct and dwt (discrete cosine/wavelet transform).
+
+    algorithm : String
+        Solver the data was reconstructed with, selecting the
+        figures/<algorithm>/ subtree. Defaults to 'lasso'.
     '''
     # for its save name, the name of file order is pixel -> gaussian -> V1 
     save_name = pixel_file.split('.')[0] + '_' + \
         gaussian_file.split('.')[0] + '_' + V1_file.split('.')[0]
-    save_path = fig_save_path(img_name, method, 'filter_dim', save_name)
+    save_path = fig_save_path(img_name, method, 'filter_dim', save_name,
+                              algorithm)
     plt.savefig(save_path, dpi = 200)
     print(f'saving error vs filter figure to {save_path}')
 

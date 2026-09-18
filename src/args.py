@@ -153,8 +153,9 @@ def eval_colorbar_args(args, parser):
     cell_size = eval(args.cell_size[0]) if args.cell_size is not None else None
     sparse_freq = eval(args.sparse_freq[0]) \
         if args.sparse_freq is not None else None
+    algorithm = args.algorithm[0] if args.algorithm is not None else 'lasso'
     return method, img_name, observation, color, dwt_type, level, alpha,\
-        num_cells, cell_size, sparse_freq, fixed_weights, filter_dim
+        num_cells, cell_size, sparse_freq, fixed_weights, filter_dim, algorithm
 
 
 def add_plot_args(parser):
@@ -231,7 +232,8 @@ def eval_plot_args(args, parser):
         parser.error(
             '[Alpha Figure] : at least method, img_name, pixel_file, '+
             'gaussian_file, V1_file required for alpha error figure')
-    return img_name, method, pixel, gaussian, v1, data_grab
+    algorithm = args.algorithm[0] if args.algorithm is not None else 'lasso'
+    return img_name, method, pixel, gaussian, v1, data_grab, algorithm
     
 def add_generic_figure_args(parser):
     ''' 
@@ -258,6 +260,12 @@ def add_generic_figure_args(parser):
         '-method', choices=['dct', 'dwt'], action='store',
         help='[Alpha, Colorbar and Num Cell Figure] : Method to use for reconstruction',
         metavar='METHOD', required=False, nargs=1)
+    parser.add_argument(
+        '-algorithm', choices=['lasso', 'ridge', 'omp', 'bp'], action='store',
+        help='[Alpha, Colorbar and Num Cell Figure] : solver whose'
+        ' result/<algorithm>/ tree to read and figures/<algorithm>/ tree to'
+        ' write (default lasso)',
+        metavar='ALGORITHM', required=False, nargs=1)
     parser.add_argument(
         '-save', action='store_true',
         help='[Alpha, Colorbar and Num Cell Figure] : save into specified path '+
