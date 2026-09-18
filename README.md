@@ -38,7 +38,7 @@ This is the base of our project where folder contains neural-network V1 model th
 
 ## Function Usage
 ### compress_sensing_library
-For examples, please look at this [example link](./compress_sensing_example.md) to see how to apply functions listed in compressed_sensing_library.
+For examples, please look at this [example](./compress_sensing_example.md) to see how to apply functions listed in compressed_sensing_library.
     
 ### figure library
 This library is still in development phase.
