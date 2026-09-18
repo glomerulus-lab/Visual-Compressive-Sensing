@@ -282,7 +282,7 @@ def run_sim_V1_dwt(method, observation, color, dwt_type, lv, alpha, num_cell,
     img_arr = np.array([img_arr]).squeeze()
     #Filter reconst to make sure it can reconstruct any size 
     reconst = large_img_experiment(img_arr, num_cell = num_cell,
-                                   cell_size = cell_size, sparse_freq = sparse_freq,
+                                   cell_size = cell_size, blob_size = sparse_freq,
                                    alpha = alpha, method = method,
                                    observation = observation, color = color,
                                    lv = lv, dwt_type = dwt_type,
@@ -403,7 +403,7 @@ def run_sim_V1_dct(method, observation, color, alpha, num_cell, cell_size,
     num_cell = int(num_cell)
     img_arr = np.array([img_arr]).squeeze()
     reconst = large_img_experiment(img_arr, num_cell = num_cell,
-                                   cell_size=cell_size, sparse_freq=sparse_freq,
+                                   cell_size=cell_size, blob_size=sparse_freq,
                                    alpha = alpha, method = method,
                                    observation = observation, color = color,
                                    fixed_weights=fixed_weights,
