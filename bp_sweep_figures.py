@@ -3,7 +3,7 @@
 
 The BP counterpart to lasso_sweep_figures.py: reads result/bp/dct/ (produced by
 bp_dct_sweep.sh) and writes figures/bp/paper_new by default. The figure
-building itself lives in sweep_figures.py, shared with lasso_sweep_figures.py
+building itself lives in src/sweep_figures.py, shared with lasso_sweep_figures.py
 so the two cannot drift apart.
 
 NO ALPHA FIGURE
@@ -29,7 +29,7 @@ Requires the BP sweeps to have been run and consolidated first:
     python consolidate_results.py --algorithm bp
 """
 
-import sweep_figures
+from src import sweep_figures
 
 if __name__ == '__main__':
     sweep_figures.main('bp', __doc__)

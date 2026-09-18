@@ -2,7 +2,7 @@
 """Regenerate the paper figures from the LASSO sweeps -- DCT only.
 
 Reads result/lasso/dct/ and writes figures/lasso/paper_new by default. The
-figure building itself lives in sweep_figures.py, shared with
+figure building itself lives in src/sweep_figures.py, shared with
 bp_sweep_figures.py so the two cannot drift apart.
 
 Figures produced:
@@ -19,7 +19,7 @@ Usage:
     python lasso_sweep_figures.py --num-cell 128        # faster reconstructions
 """
 
-import sweep_figures
+from src import sweep_figures
 
 if __name__ == '__main__':
     sweep_figures.main('lasso', __doc__)

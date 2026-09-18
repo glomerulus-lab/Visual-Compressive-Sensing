@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """Build the paper figures from swept data, for one solver -- DCT only.
 
-This is the shared body behind lasso_sweep_figures.py and bp_sweep_figures.py.
+This is the shared body behind the repo-root drivers lasso_sweep_figures.py and
+bp_sweep_figures.py, which are what you run (`python bp_sweep_figures.py`).
 Everything here is parameterised by `algorithm`, which selects both the
 result/<algorithm>/dct/ tree the sweeps are read from and the
 figures/<algorithm>/ tree the output is written to.
@@ -66,7 +67,9 @@ def figures_for(algorithm):
 
 
 def default_outdir(algorithm):
-    return os.path.join('figures', algorithm, 'paper_new')
+    # Anchored at the repo root, not the cwd: the drivers can be run from
+    # anywhere, and an explicit --outdir is still taken as given.
+    return os.path.join(search_root(), 'figures', algorithm, 'paper_new')
 
 
 # ---------------------------------------------------------------- helpers
