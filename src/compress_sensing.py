@@ -467,6 +467,10 @@ def reconstruct(W, y, alpha = None, fit_intercept = False, method = 'dct',
     if (method == 'dct') :
         img = fourier_reconstruct(W, y, alpha, num_cell, n, m, fit_intercept, algorithm=algorithm)
     elif (method == 'dwt') :
+        # wavelet_reconstruct only fits LASSO; no other solver is wired into it
+        if algorithm != 'lasso':
+            raise Exception(
+                f"method = 'dwt' only supports algorithm = 'lasso', got {algorithm}")
         img = wavelet_reconstruct(W, y, alpha, num_cell, n, m,
                                   fit_intercept, dwt_type, lv)
 
@@ -480,7 +484,8 @@ def reconstruct(W, y, alpha = None, fit_intercept = False, method = 'dct',
 
 def color_experiment(img_arr, num_cell, cell_size = None, blob_size = None,
                      alpha = None, fit_intercept = False, method = 'dct',
-                     observation = 'pixel', lv = 4, dwt_type = 'db2', W = None, rand_index=None) :
+                     observation = 'pixel', lv = 4, dwt_type = 'db2', W = None, rand_index=None,
+                     algorithm = 'lasso') :
     ''' 
     Reconstruct colored (RGB) image with sample data.
     
@@ -527,6 +532,12 @@ def color_experiment(img_arr, num_cell, cell_size = None, blob_size = None,
         Determines types of wavelet transform when dwt is used for its method.
         Not used for dct.
 
+    algorithm : String
+        Solver used to recover the sparse coefficients.
+        Supported : ['lasso', 'ridge', 'omp', 'bp'].
+        'bp' (basis pursuit) and 'omp' ignore alpha, and are dct only.
+        Default set to 'lasso'.
+
     Returns
     ----------
     img : numpy_array
@@ -563,10 +574,12 @@ def color_experiment(img_arr, num_cell, cell_size = None, blob_size = None,
                                      cell_size, blob_size)
             
         if (method == 'dct') :
-            reconst = reconstruct(W, y, alpha, method = method)
+            reconst = reconstruct(W, y, alpha, method = method,
+                                  algorithm = algorithm)
         else :
             reconst = reconstruct(W, y, alpha, method = method,
-                                  lv = lv, dwt_type = dwt_type)
+                                  lv = lv, dwt_type = dwt_type,
+                                  algorithm = algorithm)
         img[:,:,i] = reconst
         i+=1
         
@@ -581,7 +594,7 @@ def large_img_experiment(img_arr, num_cell, cell_size = None,
                          blob_size = None, filter_dim = (16, 16),
                          alpha = None, method = 'dct', observation = 'pixel',
                          lv = 2, dwt_type = 'db2', fixed_weights = False,
-                         color = False) :
+                         color = False, algorithm = 'lasso') :
     ''' 
     Allows to reconstruct any size of signal data since regular reconstruct 
     function can only deal with small size of data. 
@@ -658,6 +671,12 @@ def large_img_experiment(img_arr, num_cell, cell_size = None,
         Indicates if the image working on is color image or black/white image.
         Default set to be False.
         Possible colors are [True, False].
+
+    algorithm : String
+        Solver used to recover the sparse coefficients.
+        Supported : ['lasso', 'ridge', 'omp', 'bp'].
+        'bp' (basis pursuit) and 'omp' ignore alpha, and are dct only.
+        Default set to 'lasso'.
     
     Returns
     ----------
@@ -762,7 +781,8 @@ def large_img_experiment(img_arr, num_cell, cell_size = None,
                 lv = lv, 
                 dwt_type = dwt_type,
                 W = W, 
-                rand_index=rand_index)
+                rand_index=rand_index,
+                algorithm = algorithm)
             img_arr_padded[cur_n : (cur_n + filt_n), cur_m : nxt_m, :] = reconst
         else:    
             img_arr_pt = img_arr_padded[cur_n : (cur_n + filt_n), cur_m : nxt_m]
@@ -779,10 +799,12 @@ def large_img_experiment(img_arr, num_cell, cell_size = None,
             #print(W.shape)
             #print(y.shape)
             if (method == 'dct'):
-                reconst = reconstruct(W, y, alpha, method = method)
+                reconst = reconstruct(W, y, alpha, method = method,
+                                      algorithm = algorithm)
             else :
                 reconst = reconstruct(W, y, alpha, method = method, lv = lv,
-                                      dwt_type = dwt_type)
+                                      dwt_type = dwt_type,
+                                      algorithm = algorithm)
             img_arr_padded[cur_n : (cur_n + filt_n), cur_m : nxt_m] = reconst
         cur_m = nxt_m
 

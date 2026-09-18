@@ -341,14 +341,20 @@ def parse_sweep_args():
     num_reps : int
         Number of repetitions per hyperparameter combination. Defaults to 10,
         the value the sweep used to hardcode.
+
+    algorithm : String
+        Solver used to recover the sparse coefficients.
+        One of ['lasso', 'ridge', 'omp', 'bp']. Defaults to 'lasso'.
+        'bp' and 'omp' have no alpha penalty, so they are swept without
+        -alpha_list and are supported for the dct method only.
     '''
 
     parser = argparse.ArgumentParser(description='Create a hyperparameter sweep')
     add_sweep_args(parser)
     args = parser.parse_args()
     
-    method, img_name, observation, color, dwt_type, level, alpha_list, num_cells, cell_size, sparse_freq, fixed_weights, filter_dim, num_reps = eval_sweep_args(args, parser)    
-    return method, img_name, observation, color, dwt_type, level, alpha_list, num_cells, cell_size, sparse_freq, fixed_weights, filter_dim, num_reps
+    method, img_name, observation, color, dwt_type, level, alpha_list, num_cells, cell_size, sparse_freq, fixed_weights, filter_dim, num_reps, algorithm = eval_sweep_args(args, parser)    
+    return method, img_name, observation, color, dwt_type, level, alpha_list, num_cells, cell_size, sparse_freq, fixed_weights, filter_dim, num_reps, algorithm
 
 def add_sweep_args(parser):
     '''
@@ -400,9 +406,15 @@ def add_sweep_args(parser):
         metavar='SPARSE_FREQUENCY', required=False, nargs="+")
     # add hyperparams that are used for both dct and dwt
     parser.add_argument(
+        '-algorithm', choices=['lasso', 'ridge', 'omp', 'bp'], action='store',
+        help='solver used to recover the sparse coefficients (default lasso)',
+        metavar='ALGORITHM', required=False, nargs=1)
+    # Required for the alpha-penalised solvers only; 'bp'/'omp' have no alpha,
+    # so they reject -alpha_list rather than sweeping a parameter they ignore.
+    parser.add_argument(
         '-alpha_list', action='store', 
-        help='alpha values to use',
-        metavar="ALPHAS", required=True, nargs="+")
+        help='alpha values to use (lasso/ridge only)',
+        metavar="ALPHAS", required=False, nargs="+")
     parser.add_argument(
         '-num_reps', action='store',
         help='number of repetitions per hyperparameter combination'
@@ -476,6 +488,12 @@ def eval_sweep_args(args, parser):
     num_reps : int
         Number of repetitions per hyperparameter combination. Defaults to 10,
         the value the sweep used to hardcode.
+
+    algorithm : String
+        Solver used to recover the sparse coefficients.
+        One of ['lasso', 'ridge', 'omp', 'bp']. Defaults to 'lasso'.
+        'bp' and 'omp' have no alpha penalty, so they are swept without
+        -alpha_list and are supported for the dct method only.
     '''
     
     #args = parser.parse_args()
@@ -484,8 +502,17 @@ def eval_sweep_args(args, parser):
     observation = args.observation[0]
     color = args.color
     fixed_weights = args.fixed_weights
-    
+    algorithm = args.algorithm[0] if args.algorithm is not None else 'lasso'
+
     # deal with missing or unneccessary command line args
+    if algorithm in ('lasso', 'ridge') and args.alpha_list is None:
+        parser.error(f'{algorithm} requires -alpha_list.')
+    elif algorithm not in ('lasso', 'ridge') and args.alpha_list is not None:
+        parser.error(f'{algorithm} has no alpha penalty, so it does not'
+                     ' use -alpha_list.')
+    if algorithm != 'lasso' and method == 'dwt':
+        parser.error(f'dwt method only supports -algorithm lasso,'
+                     f' got {algorithm}.')
     if method == "dwt" and (args.dwt_type is None
                             or args.level is None):
         parser.error('dwt method requires -dwt_type and -level.')
@@ -501,7 +528,8 @@ def eval_sweep_args(args, parser):
                      ' only required for V1 observation.')
     dwt_type = args.dwt_type
     level = [eval(i) for i in args.level] if args.level is not None else None
-    alpha_list = [eval(i) for i in args.alpha_list]
+    alpha_list = [eval(i) for i in args.alpha_list] \
+        if args.alpha_list is not None else None
     
     num_reps = eval(args.num_reps[0]) if args.num_reps is not None else 10
     if not isinstance(num_reps, int) or num_reps < 1:
@@ -515,4 +543,5 @@ def eval_sweep_args(args, parser):
     sparse_freq = [eval(i) for i in args.sparse_freq] \
         if args.sparse_freq is not None else None
     return method, img_name, observation, color, dwt_type, level, alpha_list, \
-        num_cells, cell_size, sparse_freq, fixed_weights, filter_dim, num_reps
+        num_cells, cell_size, sparse_freq, fixed_weights, filter_dim, \
+        num_reps, algorithm
