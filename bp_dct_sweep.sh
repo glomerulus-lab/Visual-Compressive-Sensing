@@ -8,10 +8,11 @@
 # NO ALPHA SWEEP
 #   Basis pursuit minimises ||s||_1 subject to theta @ s == y exactly; there is
 #   no penalty to trade off, so there is no alpha.  The CLI rejects
-#   -alpha_list together with -algorithm bp, the search grid drops the `alp`
-#   dimension entirely, and the output CSVs have no `alp` column.  That makes
-#   each non-V1 run 4x smaller than the lasso equivalent (which swept
-#   0.01 0.1 1 10) and each V1 run 48 -> 12 combinations per num_cell.
+#   -alpha_list together with -algorithm bp and the grid holds a single
+#   alpha of None, so the output CSVs keep their `alp` column but leave it
+#   blank.  That makes each non-V1 run 4x smaller than the lasso equivalent
+#   (which swept 0.01 0.1 1 10) and each V1 run 48 -> 12 combinations per
+#   num_cell.
 #
 # OUTPUT NAMES
 #   Results land beside the lasso ones in result/dct/<image>/<observation>/ but

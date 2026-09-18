@@ -92,14 +92,13 @@ def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
         Solver used to recover the sparse coefficients.
         One of ['lasso', 'ridge', 'omp', 'bp']. Defaults to 'lasso'.
         'bp' (basis pursuit) and 'omp' have no alpha penalty: alpha_list is
-        ignored for them and no 'alp' column is recorded.
+        ignored for them and recorded as None.
     '''
 
-    # 'bp'/'omp' have no penalty to sweep. alpha still rides along the search
-    # grid as a single placeholder so the grid/sim plumbing stays one shape;
-    # it is dropped again before anything is written out.
-    uses_alpha = algorithm in ('lasso', 'ridge')
-    if not uses_alpha:
+    # 'bp'/'omp' have no penalty to sweep, so alpha is a single None: the grid
+    # keeps its 'alp' dimension (and the CSV its 'alp' column, empty) rather
+    # than changing shape per solver.
+    if algorithm not in ('lasso', 'ridge'):
         alpha_list = [None]
 
     delay_list = []
@@ -183,8 +182,7 @@ def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
     param_path = data_save_path(image_nm, method, observation,
                                 f'{solver_prefix}{color}_{param_csv_nm}')
     # Add error onto parameter
-    recorded_df = search_df if uses_alpha else search_df.drop(columns=['alp'])
-    params_result_df = recorded_df.join(results_df['error'])
+    params_result_df = search_df.join(results_df['error'])
     params_result_df.to_csv(param_path, index=False)
 
     n_failed = int(params_result_df['error'].isna().sum())
@@ -196,9 +194,7 @@ def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
     # Saves hyperparameter used for computing this data to txt file format
     hyperparam_track = data_save_path(image_nm, method, observation,
                                       str(f'{solver_prefix}{color}_hyperparam'))
-    hyperparam_list = [(name, values)
-                       for name, values in zip(search_df.columns, search_list)
-                       if uses_alpha or name != 'alp']
+    hyperparam_list = list(zip(search_df.columns, search_list))
     entry = f"{param_path.split('/')[-1]}\n"
     entry += "".join(f"   {name}: {values}\n" for name, values in hyperparam_list)
     entry += "\n\n"
