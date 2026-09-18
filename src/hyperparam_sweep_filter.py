@@ -18,7 +18,25 @@ import os.path
 
 import argparse
 import pywt
+import traceback
 
+
+
+def _record_failure_as_nan(sim):
+    """Wrap one sweep task so a failure costs that point, not the whole sweep.
+
+    dask.compute raises if any task raises, which used to throw away every
+    completed reconstruction in the run. Returning NaN instead keeps the
+    partial results; the failed combinations are the blank error cells in the
+    output CSV, and run_sweep reports how many there were.
+    """
+    def wrapper(*params):
+        try:
+            return sim(*params)
+        except Exception:
+            traceback.print_exc()
+            return np.nan
+    return wrapper
 
 
 def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
@@ -126,14 +144,19 @@ def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
                                             cell_size, sparse_freq, img_arr,
                                             fixed_weights, filter_dim)
 
+    safe_sim = _record_failure_as_nan(sim_wrapper)
     for p in search_df.values:
-        delay = dask.delayed(sim_wrapper)(*p)
+        delay = dask.delayed(safe_sim)(*p)
         delay_list.append(delay)
-    futures = dask.persist(*delay_list)
-    progress(futures)
-    # Compute the result
-    results = dask.compute(*futures)
-    
+    try:
+        futures = dask.persist(*delay_list)
+        progress(futures)
+        # Compute the result
+        results = dask.compute(*futures)
+    finally:
+        # Terminate Dask properly even if the sweep blew up
+        client.close()
+
     # Saves Computed data to csv file format
     results_df = pd.DataFrame(results, columns=['error'])#, 'theta', 'reform', 's'])
     param_csv_nm = "param_"
@@ -142,6 +165,12 @@ def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
     # Add error onto parameter
     params_result_df = search_df.join(results_df['error'])
     params_result_df.to_csv(param_path, index=False)
+
+    n_failed = int(params_result_df['error'].isna().sum())
+    if n_failed:
+        print(f"WARNING: {n_failed} of {len(params_result_df)} tasks failed; "
+              f"their error is blank in {param_path.split('/')[-1]} "
+              f"(tracebacks above)")
     
     # Saves hyperparameter used for computing this data to txt file format
     hyperparam_track = data_save_path(image_nm, method, observation,
@@ -153,9 +182,6 @@ def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
         f.write(f"   {hyperparam[0]}: {hyperparam[1]}\n")
     f.write("\n\n")
     f.close()
-    
-    # Terminate Dask properly
-    client.close()
 
 # run sim for non-v1 dwt
 def run_sim_dwt(method, observation, color, dwt_type,
