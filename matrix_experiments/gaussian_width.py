@@ -202,6 +202,85 @@ def full_NSP(d, S, rho, cov, num_samples=400, restarts=4,
               f"stat.dim ~ {(v**2).mean():.2f}")
     return v.mean(), se, v
 
+def full_descent_cone(d, S, signs, cov, num_samples=400, iters=250,
+                      batch=None, seed=0, verbose=True):
+    """Gaussian width of the l1 DESCENT CONE at a known sparse vector, under
+    covariance `cov`.
+
+    Where `full_NSP` handles the NSP bad set -- the union of the descent cones
+    over all 2^s sign patterns on S -- this takes the sign pattern as given and
+    measures the single cone that actually governs basis pursuit at that vector:
+
+        D = { h : ||h_Sc||_1 <= -<sign(x_S), h_S> }
+
+    which is K_eps with rho = 1 and eps = -sign(x_S), in the notation of
+    `_proj_K_eps`.  Because D is a single CONVEX cone there is no sign
+    enumeration and no fixed-point search: one FISTA solve per batch is exact
+    up to convergence, so this is both cheaper and tighter than `full_NSP`.
+    Its statistical dimension is strictly smaller -- the NSP set is a superset.
+
+    Parameters
+    ----------
+    d : int
+        Ambient dimension.
+    S : array_like of int
+        Support of the sparse vector.
+    signs : array_like
+        Sign pattern on the support.  Either length |S| (aligned to sorted S)
+        or length d (the signs of the full vector, from which signs[S] is
+        taken).  For a sparse vector x:  S = np.nonzero(x)[0], signs = np.sign(x).
+    cov : (d, d) ndarray
+        Covariance of the rows of the design matrix, in the same basis as S.
+
+    Returns
+    -------
+    (mean width, standard error, per-sample widths) -- matching `full_NSP`, so
+    the statistical dimension is (samples ** 2).mean().
+    """
+    S = np.asarray(sorted(S), dtype=int)
+    Sc = np.setdiff1d(np.arange(d), S)
+    s = len(S)
+    rho = 1.0                       # the descent cone is the rho = 1 case
+
+    signs = np.asarray(signs, dtype=float).ravel()
+    if signs.size == d:
+        signs = signs[S]
+    elif signs.size != s:
+        raise ValueError(f"signs must have length {s} (=|S|) or {d} (=d), "
+                         f"got {signs.size}")
+    if np.any(signs == 0):
+        raise ValueError("signs must be nonzero on the support")
+    eps = -np.sign(signs)           # D = K_eps with eps = -sign(x_S)
+
+    lam, Q = np.linalg.eigh(cov)
+    lam = np.maximum(lam, 0.0)
+    Csqrt = (Q * np.sqrt(lam)) @ Q.T
+    Cm = (Q * lam) @ Q.T
+    Lip = lam.max()
+
+    rng = np.random.default_rng(seed)
+    batch = batch or num_samples
+    vals, ub = [], []
+
+    for start in range(0, num_samples, batch):
+        n = min(batch, num_samples - start)
+        G = rng.standard_normal((d, n))
+        E = np.repeat(eps[:, None], n, axis=1)
+        V = _fista(G, Csqrt, Cm, E, S, Sc, rho, Lip, iters)
+        vals.append(_value(V, G, Csqrt))
+
+        kap = (1 + 1/rho) * np.sqrt(s) / np.sqrt(max(lam.min(), 1e-300))
+        ub.append(np.minimum(np.linalg.norm(G, axis=0),
+                             kap * np.abs(Csqrt @ G).max(0)))
+
+    v = np.concatenate(vals)
+    se = v.std(ddof=1) / np.sqrt(len(v))
+    if verbose:
+        print(f"w = {v.mean():.4f} +/- {se:.4f}   "
+              f"[ceiling {np.concatenate(ub).mean():.3f}]   "
+              f"stat.dim ~ {(v**2).mean():.2f}")
+    return v.mean(), se, v
+
 def diag_sampling_NSP(d, S, rho, c, num_samples=20000, seed=0, batch=5000):
     """Exact per-sample width for DIAGONAL covariance c (length-d vector).
     No sign enumeration, no iterative solver."""

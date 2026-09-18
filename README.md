@@ -18,13 +18,10 @@ To use the libraries in the src directory as a package, run command below in the
 ### src
 This is where all source codes are stored. Source code mainly separated into 5 different files. 
     
-&ensp; * Compress Sensing Library (1): Contains all codes that deals with computations of signal data with its observation method. 
-
-&ensp; * (hyperparam sweep file) (2): Calls Signal reconstruction method defined in Compress Sensing Library and call dask (parallel computation library) to compute hyperparameters that user wants to test. There are total two hyperparameter sweep files, which one deals with descrete cosine transform ([DCT](https://en.wikipedia.org/wiki/Discrete_cosine_transform)) and the other deals with descrete wavelet transform ([DWT](https://en.wikipedia.org/wiki/Discrete_wavelet_transform)). 
-
-&ensp; * Utility Library (1): Contains all methods that are not directly related to signal computation nor observation method, but used to approach desired goal such as saving function, connecting functions and others.
-
-&ensp; * Figure Library (1): Once there is data, this figure library would grab the resultant data file and change data to figures for visualization
+- Compress Sensing Library (1): Contains all codes that deals with computations of signal data with its observation method. 
+- (hyperparam sweep file) (2): Calls Signal reconstruction method defined in Compress Sensing Library and call dask (parallel computation library) to compute hyperparameters that user wants to test. There are total two hyperparameter sweep files, which one deals with descrete cosine transform ([DCT](https://en.wikipedia.org/wiki/Discrete_cosine_transform)) and the other deals with descrete wavelet transform ([DWT](https://en.wikipedia.org/wiki/Discrete_wavelet_transform)). 
+- Utility Library (1): Contains all methods that are not directly related to signal computation nor observation method, but used to approach desired goal such as saving function, connecting functions and others.
+- Figure Library (1): Once there is data, this figure library would grab the resultant data file and change data to figures for visualization
 
 
 

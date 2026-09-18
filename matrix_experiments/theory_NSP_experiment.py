@@ -42,7 +42,8 @@ from structured_random_features.src.models.weights import V1_covariance_matrix
 
 from .plots.paper_plots import process_image, extract_patches, run_selected_patches
 from .plots.exp_constants import CELL_SIZE, BLOB_SIZE, PATCH_SIZE, IMAGE_FILE
-from .gaussian_width import diag_analytic_NSP, full_NSP, statdim_descent_cone
+from .gaussian_width import (diag_analytic_NSP, full_NSP, full_descent_cone,
+                             statdim_descent_cone)
 
 # Local copies of the small helpers in `test_theory`; that module is a script
 # that runs its whole experiment at import time, so it cannot be imported here.
@@ -79,8 +80,8 @@ def num(x, fmt=".4e"):
 
 
 PATCH_IDX = 58
-SPARSITY = 30
-N_OBS_LIST = [40, 50, 60, 70, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260]
+SPARSITY = 40
+N_OBS_LIST = [40, 50, 60, 70, 80, 90, 100, 110, 120, 140, 160, 180, 200, 220, 240, 260]
 RHO = 1.0                 # l1 descent cone / NSP constant for exact recovery
 ALG = 'bp'
 METHODS = ['Pixel', 'Gaussian', 'V1']
@@ -171,11 +172,12 @@ def v1_covariance_dct(patch_shape, cell_size, blob_size, center):
     spec = L[rank]
     return cov, var, spec
 
-def compute_theory(d, S, rho, cov_var, cov_spec, cov_V1,
+def compute_theory(d, S, signs, rho, cov_var, cov_spec, cov_V1,
                    num_samples, restarts, iters, sign_rounds):
     """Statistical dimension predictions for the covariance models.
 
     `cov_var` and `cov_spec` must be indexed by DCT coordinate, matching S.
+    `signs` is the sign pattern of z* on S, used by the descent cone.
     """
     preds = {}
 
@@ -195,6 +197,14 @@ def compute_theory(d, S, rho, cov_var, cov_spec, cov_V1,
     # E[w^2] is the statistical dimension; w^2 is a (slightly low) proxy
     preds['V1 full'] = {'width': w_full, 'statdim': (samples ** 2).mean(),
                         'se': se_full}
+
+    # The single convex cone that actually governs BP at z*, under the full V1
+    # covariance: sharper than the NSP bad set above, which unions it over all
+    # 2^s sign patterns on S.  Should be the tightest prediction of V1's threshold.
+    w_dc, se_dc, samples_dc = full_descent_cone(
+        d, S, signs, cov_V1, num_samples=num_samples * 100, iters=iters, verbose=False)
+    preds['V1 descent cone'] = {'width': w_dc, 'statdim': (samples_dc ** 2).mean(),
+                                'se': se_dc}
     return preds
 
 
@@ -241,6 +251,7 @@ def plot_results(n_obs_list, success, preds, filename):
                     'V1 diag (spectrum)': ('#1565C0', ':'),
                     'V1 diag (variances)': ('#7E57C2', ':'),
                     'V1 full': ('#2196F3', '-.'),
+                    'V1 descent cone': ('#0D47A1', '-'),
                     'descent cone': ('#757575', '--')}
 
     plt.figure(figsize=(8, 5))
@@ -322,7 +333,7 @@ def main():
     # --- theory -------------------------------------------------------------
     header("Gaussian width / statistical dimension")
     cov_V1, cov_var, cov_spec = v1_covariance_dct(dim, CELL_SIZE, BLOB_SIZE, center)
-    preds = compute_theory(d, S, RHO, cov_var, cov_spec, cov_V1,
+    preds = compute_theory(d, S, np.sign(zstar[S]), RHO, cov_var, cov_spec, cov_V1,
                            num_samples, restarts, iters, sign_rounds)
 
     preds['descent cone'] = {
