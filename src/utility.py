@@ -8,7 +8,11 @@ import os
 import re
 import matplotlib.pyplot as plt
 from pathlib import Path
-from src.compress_sensing import *
+# NOTE: do NOT import src.compress_sensing here.  compress_sensing does
+# `from src.utility import *`, so importing it back creates a cycle whose
+# outcome depends on which module is imported first: importing src.utility
+# first left compress_sensing without utility's names (NameError on
+# compute_zero_padding_dimension inside large_img_experiment).
 
 # Package for importing image representation
 from PIL import Image, ImageOps
