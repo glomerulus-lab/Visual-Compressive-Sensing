@@ -109,7 +109,7 @@ def _reserve_unique(path):
             return candidate
 
 
-def data_save_path(img_nm, method, observation, save_nm): 
+def data_save_path(img_nm, method, observation, save_nm, algorithm='lasso'): 
     ''' 
     Gives absolute paths for collected data to be saved to have organized folder
     structure. File will be saved under result directory and its format is set 
@@ -131,6 +131,12 @@ def data_save_path(img_nm, method, observation, save_nm):
         
     save_nm : String
         Name of the file that it will be saved to
+
+    algorithm : String
+        Solver the data was reconstructed with.
+        Possible algorithms are ['lasso', 'ridge', 'omp', 'bp']
+        Defaults to 'lasso', which is what every result predating the
+        other solvers was produced with.
         
     Returns
     ----------
@@ -156,7 +162,8 @@ def data_save_path(img_nm, method, observation, save_nm):
         save_nm = save_nm + "_".join(
             str.split(time.ctime().replace(":", "_"))) + '.csv'  
     
-    result_path = os.path.join(root, f"result/{method}/{img_nm}/{observation}")
+    result_path = os.path.join(
+        root, f"result/{algorithm.lower()}/{method}/{img_nm}/{observation}")
     Path(result_path).mkdir(parents=True, exist_ok = True)
     
     full_path = os.path.join(result_path, save_nm)
@@ -257,11 +264,12 @@ def remove_unnamed_data(data):
     return data
 
 def load_dataframe(img_nm, method, pixel_file=None,
-                        gaussian_file=None, V1_file=None) :
+                        gaussian_file=None, V1_file=None, algorithm='lasso') :
     root = search_root()
-    load_V1 = f"{root}/result/{method}/{img_nm}/V1/{V1_file}"
-    load_gaussian = f"{root}/result/{method}/{img_nm}/gaussian/{gaussian_file}"
-    load_pixel = f"{root}/result/{method}/{img_nm}/pixel/{pixel_file}"
+    img_dir = f"{root}/result/{algorithm.lower()}/{method}/{img_nm}"
+    load_V1 = f"{img_dir}/V1/{V1_file}"
+    load_gaussian = f"{img_dir}/gaussian/{gaussian_file}"
+    load_pixel = f"{img_dir}/pixel/{pixel_file}"
     
     pixel_df = remove_unnamed_data(pd.read_csv(load_pixel))
     gaussian_df = remove_unnamed_data(pd.read_csv(load_gaussian))
@@ -271,11 +279,12 @@ def load_dataframe(img_nm, method, pixel_file=None,
     return V1_df, gaussian_df, pixel_df
 
 def load_dataframe_new(img_nm, method, pixel_file=None,
-                        gaussian_file=None, V1_file=None) :
+                        gaussian_file=None, V1_file=None, algorithm='lasso') :
     root = search_root()
-    load_V1 = f"{root}/result/{method}/{img_nm}/V1/{V1_file}"
-    load_gaussian = f"{root}/result/{method}/{img_nm}/gaussian/{gaussian_file}"
-    load_pixel = f"{root}/result/{method}/{img_nm}/pixel/{pixel_file}"
+    img_dir = f"{root}/result/{algorithm.lower()}/{method}/{img_nm}"
+    load_V1 = f"{img_dir}/V1/{V1_file}"
+    load_gaussian = f"{img_dir}/gaussian/{gaussian_file}"
+    load_pixel = f"{img_dir}/pixel/{pixel_file}"
     
     pixel_df = pd.read_csv(load_pixel, index_col=0)
     gaussian_df = pd.read_csv(load_gaussian, index_col=0)
@@ -293,7 +302,7 @@ def load_dataframe_new(img_nm, method, pixel_file=None,
     return df
 
 def process_result_data(img_file, method, target_param, pixel_file=None,
-                        gaussian_file=None, V1_file=None):
+                        gaussian_file=None, V1_file=None, algorithm='lasso'):
     ''' 
     Open 3 csv data files, make it as pandas dataframe, remove unnecessary 
     column, find the plotting data with minimum mean error 
@@ -323,6 +332,10 @@ def process_result_data(img_file, method, target_param, pixel_file=None,
     V1_file : String
         V1 observation data file from hyperparameter sweep.
         Required for plotting.
+
+    algorithm : String
+        Solver the data was reconstructed with, which selects the
+        result/<algorithm>/ subtree to read from. Defaults to 'lasso'.
         
     Returns
     ----------
@@ -341,7 +354,7 @@ def process_result_data(img_file, method, target_param, pixel_file=None,
         
     
     V1_df, gaussian_df, pixel_df = load_dataframe(img_nm, method, pixel_file,
-                        gaussian_file, V1_file)
+                        gaussian_file, V1_file, algorithm)
     
     obs_dict= {'V1': V1_df,
                'gaussian': gaussian_df, 
@@ -357,7 +370,7 @@ def process_result_data(img_file, method, target_param, pixel_file=None,
     return obs_dict
 
 def process_result_data_new(img_file, method, target_param, pixel_file=None,
-                        gaussian_file=None, V1_file=None):
+                        gaussian_file=None, V1_file=None, algorithm='lasso'):
     ''' 
     Open 3 csv data files, make it as pandas dataframe, remove unnecessary 
     column, find the plotting data with minimum mean error 
@@ -387,6 +400,10 @@ def process_result_data_new(img_file, method, target_param, pixel_file=None,
     V1_file : String
         V1 observation data file from hyperparameter sweep.
         Required for plotting.
+
+    algorithm : String
+        Solver the data was reconstructed with, which selects the
+        result/<algorithm>/ subtree to read from. Defaults to 'lasso'.
         
     Returns
     ----------
@@ -403,7 +420,8 @@ def process_result_data_new(img_file, method, target_param, pixel_file=None,
         print("All three files required to generate figure")
         sys.exit(0)
         
-    data = load_dataframe_new(img_nm, method, pixel_file, gaussian_file, V1_file)
+    data = load_dataframe_new(img_nm, method, pixel_file, gaussian_file,
+                              V1_file, algorithm)
     # The V1 frequency parameter is written as sparse_freq by the sweep and was
     # renamed blob_size downstream; only one of the two is present depending on
     # when the data was produced, and pixel/gaussian rows carry neither.

@@ -14,11 +14,11 @@
 #   (which swept 0.01 0.1 1 10) and each V1 run 48 -> 12 combinations per
 #   num_cell.
 #
-# OUTPUT NAMES
-#   Results land beside the lasso ones in result/dct/<image>/<observation>/ but
-#   with a `bp_` prefix:  bp_{color}_param_<ctime>.csv and
-#   bp_{color}_hyperparam.txt.  The lasso files keep their historical
-#   {color}_param_... names, so nothing here overwrites an existing sweep.
+# OUTPUT PATHS
+#   Each solver owns a subtree, so these land in
+#   result/bp/dct/<image>/<observation>/ and cannot collide with the LASSO
+#   sweeps in result/lasso/dct/.  Filenames are the same shape in both:
+#   {color}_param_<ctime>.csv plus a {color}_hyperparam.txt log.
 #
 #   The True_/False_ part of the name is `color`, NOT `fixed_weights`:
 #   baboon/fruits are RGB and are swept with -color; barbara/boat are not.
@@ -28,9 +28,9 @@
 #   is far slower than a LASSO fit -- the filter_dim 32 waves dominate the
 #   runtime.  Use NUM_REPS=1 (or DRY_RUN=1) before committing to the full 10.
 #
-# WARNING: running this APPENDS to result/dct/.  Each run writes a new
-# timestamped bp_{color}_param_<ctime>.csv and appends to
-# bp_{color}_hyperparam.txt.
+# WARNING: running this APPENDS to result/bp/dct/.  Each run writes a new
+# timestamped {color}_param_<ctime>.csv and appends to
+# {color}_hyperparam.txt.
 # Set DRY_RUN=1 to print the commands without executing them.
 #
 # Usage:   ./bp_dct_sweep.sh

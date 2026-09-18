@@ -176,11 +176,10 @@ def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
     # Saves Computed data to csv file format
     results_df = pd.DataFrame(results, columns=['error'])#, 'theta', 'reform', 's'])
     param_csv_nm = "param_"
-    # lasso keeps its historical '{color}_param_...' names; every other solver
-    # is prefixed so its results sit beside them without colliding.
-    solver_prefix = '' if algorithm == 'lasso' else f'{algorithm}_'
+    # Each solver gets its own result/<algorithm>/ subtree, so the filenames
+    # stay the same shape across solvers.
     param_path = data_save_path(image_nm, method, observation,
-                                f'{solver_prefix}{color}_{param_csv_nm}')
+                                f'{color}_{param_csv_nm}', algorithm)
     # Add error onto parameter
     params_result_df = search_df.join(results_df['error'])
     params_result_df.to_csv(param_path, index=False)
@@ -193,7 +192,7 @@ def run_sweep(method, img, observation, color, dwt_type, lv, alpha_list,
     
     # Saves hyperparameter used for computing this data to txt file format
     hyperparam_track = data_save_path(image_nm, method, observation,
-                                      str(f'{solver_prefix}{color}_hyperparam'))
+                                      str(f'{color}_hyperparam'), algorithm)
     hyperparam_list = list(zip(search_df.columns, search_list))
     entry = f"{param_path.split('/')[-1]}\n"
     entry += "".join(f"   {name}: {values}\n" for name, values in hyperparam_list)

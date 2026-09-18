@@ -5,7 +5,7 @@ The figures under figures/paper were assembled by hand in Inkscape: the
 varying_* panels are matplotlib SVGs pasted side by side with DCT/DWT labels
 added by hand, and the reconstruction grids are composites of individually
 rendered images. Nothing recorded which sources went where, so this rebuilds
-them from result/dct/ instead of trying to recover that layout.
+them from result/lasso/dct/ instead of trying to recover that layout.
 
 Differences from the hand-made originals, by design:
   * DCT only. The DWT halves of varying_* are dropped, and dwt_reconstructions
@@ -41,6 +41,7 @@ from src.utility import process_image, search_root
 from src.figure import error_vs_num_cell, error_vs_alpha, error_vs_filter_dim
 
 METHOD = 'dct'
+ALGORITHM = 'lasso'      # which result/<algorithm>/ subtree to read
 # image file -> whether the sweep for it was run in colour (-color)
 IMAGES = {'baboon.png': True, 'barbara.bmp': False,
           'boat.png': False, 'fruits.png': True}
@@ -70,7 +71,7 @@ def best_params(img, observation, num_cell=None):
     trading reconstruction quality against runtime.
     """
     img_nm = img.split('.')[0]
-    path = os.path.join(search_root(), 'result', METHOD, img_nm,
+    path = os.path.join(search_root(), 'result', ALGORITHM, METHOD, img_nm,
                         observation, CSV[observation])
     df = pd.read_csv(path)
     if num_cell is not None:

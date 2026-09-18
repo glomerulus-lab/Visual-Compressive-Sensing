@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# Reproduce every hyperparameter sweep behind result/dct/.
+# Reproduce every hyperparameter sweep behind result/lasso/dct/.
 #
-# These 36 invocations were INFERRED from the files in result/dct/ -- the
+# These 36 invocations were INFERRED from the files now in result/lasso/dct/
+# (they lived in result/dct/ before the per-solver split) -- the
 # original sweep was driven by hand from a shell, so no driver was ever
 # committed.  Reconstructed from:
-#   * the directory layout   result/dct/<image>/<observation>/
+#   * the directory layout   result/lasso/dct/<image>/<observation>/
 #   * the grids recorded in  {True,False}_hyperparam.txt
 #   * the num_cell/filter_dim pairing in the consolidated {V1,Pixel,Gaussian}.csv
 #   * the save-name logic in src/hyperparam_sweep_filter.py (run_sweep) and
-#     src/utility.py (data_save_path)
+#     src/utility.py (data_save_path, which puts each solver under
+#     result/<algorithm>/ -- lasso here)
 #
 # 4 images x 3 observations x 3 num_cells waves = 36 runs.
 # Every command below was verified to parse through src/args.py.
@@ -33,7 +35,7 @@
 #   False).  If the original V1 runs used fixed weights, that flag is missing
 #   from all 12 V1 commands.
 #
-# WARNING: running this APPENDS to result/dct/.  Each run writes a new
+# WARNING: running this APPENDS to result/lasso/dct/.  Each run writes a new
 # timestamped {color}_param_<ctime>.csv and appends to {color}_hyperparam.txt,
 # so existing per-run data is not overwritten, but the directories accumulate.
 # It does NOT touch the consolidated {V1,Pixel,Gaussian}.csv files -- run

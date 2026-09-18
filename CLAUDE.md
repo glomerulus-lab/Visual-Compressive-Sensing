@@ -27,23 +27,25 @@ Core pipeline (all in `src/`):
 
 - **`src/compress_sensing.py`** — the math core. For any observation method, an experiment generates a weight/sampling matrix `W` and observed values `y = W @ img`, then reconstructs the image by fitting `Lasso` on `y` against `W` transformed into a sparse basis, and inverting that transform.
   - `generate_pixel_observation` / `generate_gaussian_observation` / `generate_V1_observation` — build `W` (and derived `y`) for the three observation types. V1 weights come from the vendored `structured_random_features` package (see below).
-  - `fourier_reconstruct` (DCT basis) / `wavelet_reconstruct` (DWT basis, via `pywt`) — fit LASSO in the transform domain and invert.
+  - `fourier_reconstruct` (DCT basis) / `wavelet_reconstruct` (DWT basis, via `pywt`) — fit a sparse solver in the transform domain and invert. `fourier_reconstruct` takes `algorithm` ∈ {`lasso`, `ridge`, `omp`, `bp`} (`bp` = exact basis pursuit via `scipy.optimize.linprog`, no alpha); `wavelet_reconstruct` is LASSO-only.
   - `reconstruct(W, y, ...)` — dispatches to one of the above based on `method='dct'|'dwt'`. Works on a single 2D (grayscale) patch.
   - `color_experiment` — runs `reconstruct` independently per RGB channel (reusing one `W` across channels when passed in).
   - `large_img_experiment` — the entry point for real (non-toy-sized) images. `reconstruct`/LASSO only works well on small patches, so this tiles the (optionally zero-padded) image into `filter_dim` blocks and reconstructs each block independently, optionally reusing the same weights (`fixed_weights=True`) across all blocks instead of drawing fresh random weights per block.
 - **`src/utility.py`** — path/IO helpers shared by everything else. `search_root()` walks up parent directories looking for one named `Visual-Compressive-Sensing`, so all save/load path helpers only work correctly when the repo directory keeps that name. `data_save_path`/`fig_save_path` build the canonical `result/<method>/<image>/<observation>/...` and `figures/<method>/<image>/<observation>/...` layout (see below) and create directories as needed. `process_image` loads a file from `images/`.
-- **`src/hyperparam_sweep_filter.py`** — CLI (`python -m src.hyperparam_sweep_filter ...` style, see `src/args.py` for flags) that runs a Dask-parallelized grid sweep of `large_img_experiment` over hyperparameters (alpha, num_cells, cell_size, sparse_freq, filter_dim, dwt level/type, repetitions) for one observation+method combo, and writes results as CSV under `result/` plus a matching hyperparameter-tracking `.txt` file.
+- **`src/hyperparam_sweep_filter.py`** — CLI (`python -m src.hyperparam_sweep_filter ...` style, see `src/args.py` for flags) that runs a Dask-parallelized grid sweep of `large_img_experiment` over hyperparameters (alpha, num_cells, cell_size, sparse_freq, filter_dim, dwt level/type, repetitions) for one observation+method+algorithm combo, and writes results as CSV under `result/` plus a matching hyperparameter-tracking `.txt` file. `-algorithm` selects the solver (`lasso` default, plus `ridge`/`omp`/`bp`); `bp`/`omp` have no alpha penalty, so they reject `-alpha_list` and record `alp` as empty, and only `lasso` is wired into the `dwt` method.
 - **`src/figure.py`** — turns swept CSV result data (or a single live reconstruction) into plots: `colorbar_live_reconst` (side-by-side reconstruction + pixel error heatmap for one parameter set), `error_vs_num_cell`, `error_vs_alpha`, `error_vs_filter_dim` (compare pixel/gaussian/V1 curves from swept CSVs, picking the best hyperparameters per x-value). Also runnable as a CLI (see `src/args.py::parse_figure_args`).
 - **`src/args.py`** — all `argparse` wiring for the sweep and figure CLIs; the two CLIs share many flags but require different subsets depending on `method`/`observation`/`fig_type`.
 
 ### Data flow / on-disk layout
 
 ```
-images/                                  # source images (input)
-result/<method>/<image>/<observation>/   # hyperparam sweep CSVs + hyperparameter .txt logs (output of hyperparam_sweep_filter.py)
-figures/<method>/<image>/<observation>/  # generated plots (output of figure.py)
+images/                                              # source images (input)
+result/<algorithm>/<method>/<image>/<observation>/   # hyperparam sweep CSVs + hyperparameter .txt logs (output of hyperparam_sweep_filter.py)
+figures/<method>/<image>/<observation>/              # generated plots (output of figure.py)
 ```
-`method` ∈ {`dct`, `dwt`}, `observation` ∈ {`pixel`, `gaussian`, `V1`} (V1 is upper-cased in paths, others lowercased).
+`algorithm` ∈ {`lasso`, `bp`, ...}, `method` ∈ {`dct`, `dwt`}, `observation` ∈ {`pixel`, `gaussian`, `V1`} (V1 is upper-cased in paths, others lowercased).
+
+The `<algorithm>` level keeps each solver's sweeps in their own subtree; `data_save_path`/`load_dataframe*` default it to `lasso`, which is what every result predating basis pursuit was produced with. Note `figures/` has *no* algorithm level — the figure CLI has no `-algorithm` flag yet, so BP plots would collide with LASSO ones.
 
 ### `structured_random_features/`
 

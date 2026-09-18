@@ -84,7 +84,8 @@ def show_reconstruction_error(img_arr, reconst, method,
 
 
 def error_vs_num_cell(img, method, pixel_file=None, gaussian_file=None,
-                          V1_file=None, data_grab = 'auto', ax = None) :
+                          V1_file=None, data_grab = 'auto', ax = None,
+                          algorithm = 'lasso') :
     ''' 
     Generate figure that compares which method gives the best minimum error
     
@@ -122,7 +123,7 @@ def error_vs_num_cell(img, method, pixel_file=None, gaussian_file=None,
     
     #Pre-processing data to receive
     filter_dim = '(32, 32)'
-    data = process_result_data_new(img, method, 'num_cell', pixel_file, gaussian_file, V1_file)
+    data = process_result_data_new(img, method, 'num_cell', pixel_file, gaussian_file, V1_file, algorithm)
     data = data[data['filter_dim']==filter_dim]
     if method == 'dwt':
         mean_data = data.groupby(['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv']).mean()
@@ -193,7 +194,8 @@ def error_vs_num_cell(img, method, pixel_file=None, gaussian_file=None,
     #    fig.set_size_inches(width, height)
         
 def error_vs_filter_dim(img, method, pixel_file=None, gaussian_file=None,
-                          V1_file=None, data_grab = 'auto', ax = None) :
+                          V1_file=None, data_grab = 'auto', ax = None,
+                          algorithm = 'lasso') :
     ''' 
     Generate figure that compares which method gives the best minimum error
     
@@ -230,7 +232,7 @@ def error_vs_filter_dim(img, method, pixel_file=None, gaussian_file=None,
         sys.exit(0)
     
     #Pre-processing data to receive
-    data = process_result_data_new(img, method, 'filter_dim', pixel_file, gaussian_file, V1_file)
+    data = process_result_data_new(img, method, 'filter_dim', pixel_file, gaussian_file, V1_file, algorithm)
     if method == 'dwt':
         mean_data = data.groupby(['type', 'alp', 'num_cell', 'sparse_freq', 'cell_size', 'filter_dim', 'lv']).mean()
     elif method == 'dct':
@@ -306,7 +308,7 @@ def error_vs_filter_dim(img, method, pixel_file=None, gaussian_file=None,
     #fig.set_size_inches(width, height)
     
 def error_vs_alpha(img, method, pixel_file, gaussian_file, V1_file, save = False,
-                   ax = None):
+                   ax = None, algorithm = 'lasso'):
     ''' 
     Generate figure that compares various alpha LASSO penalty and how it affects
     the error of the reconstruction among three different observations. 
@@ -349,7 +351,7 @@ def error_vs_alpha(img, method, pixel_file, gaussian_file, V1_file, save = False
         sys.exit(0)
 
     #Pre-processing data to receive
-    data = process_result_data_new(img, method, 'alp', pixel_file, gaussian_file, V1_file)
+    data = process_result_data_new(img, method, 'alp', pixel_file, gaussian_file, V1_file, algorithm)
     data = data[data['num_cell'] == fixed_cell]
     data = data[data['filter_dim'] == filter_dim]
     if method == 'dwt':

@@ -3,11 +3,11 @@
 
 hyperparam_sweep_filter.py writes one timestamped CSV per invocation:
 
-    result/<method>/<image>/<observation>/{True,False}_param_<ctime>.csv
+    result/<algorithm>/<method>/<image>/<observation>/{True,False}_param_<ctime>.csv
 
 This collects those into the consolidated file the analysis code reads:
 
-    result/<method>/<image>/<observation>/{V1,Pixel,Gaussian}.csv
+    result/<algorithm>/<method>/<image>/<observation>/{V1,Pixel,Gaussian}.csv
 
 The True_/False_ prefix on the inputs is `color`, not `fixed_weights`; runs of
 both kinds are concatenated together, exactly as the existing files are.
@@ -15,7 +15,8 @@ both kinds are concatenated together, exactly as the existing files are.
 SAFETY
 ------
 The consolidated files already in this repo are NOT reproducible from the
-timestamped CSVs sitting beside them -- checked on result/dct/baboon/gaussian,
+timestamped CSVs sitting beside them -- checked on
+result/lasso/dct/baboon/gaussian,
 where 0 of the 600 consolidated rows appear anywhere in the 1200 timestamped
 rows, and the consolidated file carries filter_dim values ((8,8), (16,16)) that
 no surviving per-run file contains.  The per-run CSVs for those sweeps are
@@ -33,6 +34,7 @@ Usage:
     python consolidate_results.py --dry-run
     python consolidate_results.py --merge
     python consolidate_results.py --method dct --image barbara --merge
+    python consolidate_results.py --algorithm bp --merge
 """
 
 import argparse
@@ -142,13 +144,16 @@ def main():
     g.add_argument('--rebuild', action='store_true',
                    help='rewrite from per-run CSVs alone (LOSSY, see docstring)')
     ap.add_argument('--dry-run', action='store_true', help='report only')
+    ap.add_argument('--algorithm',
+                    help='limit to one solver subtree (lasso, bp, ...)')
     ap.add_argument('--method', help='limit to one method (dct, dwt)')
     ap.add_argument('--image', help='limit to one image')
     ap.add_argument('--result-dir', default='result')
     args = ap.parse_args()
 
     mode = 'merge' if args.merge else 'rebuild' if args.rebuild else 'skip'
-    pattern = os.path.join(args.result_dir, args.method or '*', args.image or '*', '*')
+    pattern = os.path.join(args.result_dir, args.algorithm or '*',
+                           args.method or '*', args.image or '*', '*')
 
     print(f"mode={mode}{' (dry run)' if args.dry_run else ''}  scanning {pattern}\n")
     n = 0
