@@ -69,16 +69,16 @@ WAVE3="128 224 320 416 512";  DIM3=32
 #V1_GRID=(-cell_size 50 100 200 -sparse_freq 2 4 6 8)
 V1_GRID=(-cell_size 50 -sparse_freq 2 4 6 8)
 
-# ---------------------------------------------------------------- baboon.png  [color (RGB)]
-# sweep baboon.png pixel    "$WAVE1" $DIM1 -color
-# sweep baboon.png pixel    "$WAVE2" $DIM2 -color
-# sweep baboon.png pixel    "$WAVE3" $DIM3 -color
-# sweep baboon.png gaussian "$WAVE1" $DIM1 -color
-# sweep baboon.png gaussian "$WAVE2" $DIM2 -color
-# sweep baboon.png gaussian "$WAVE3" $DIM3 -color
-# sweep baboon.png V1       "$WAVE1" $DIM1 "${V1_GRID[@]}" -color
-# sweep baboon.png V1       "$WAVE2" $DIM2 "${V1_GRID[@]}" -color
-sweep baboon.png V1       "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
+# ---------------------------------------------------------------- mandril.bmp  [color (RGB)]
+# sweep mandril.bmp pixel    "$WAVE1" $DIM1 -color
+# sweep mandril.bmp pixel    "$WAVE2" $DIM2 -color
+# sweep mandril.bmp pixel    "$WAVE3" $DIM3 -color
+# sweep mandril.bmp gaussian "$WAVE1" $DIM1 -color
+# sweep mandril.bmp gaussian "$WAVE2" $DIM2 -color
+# sweep mandril.bmp gaussian "$WAVE3" $DIM3 -color
+# sweep mandril.bmp V1       "$WAVE1" $DIM1 "${V1_GRID[@]}" -color
+# sweep mandril.bmp V1       "$WAVE2" $DIM2 "${V1_GRID[@]}" -color
+sweep mandril.bmp V1       "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
 
 # ---------------------------------------------------------------- barbara.bmp  [grayscale]
 sweep barbara.bmp pixel    "$WAVE1" $DIM1
@@ -91,26 +91,26 @@ sweep barbara.bmp V1       "$WAVE1" $DIM1 "${V1_GRID[@]}"
 sweep barbara.bmp V1       "$WAVE2" $DIM2 "${V1_GRID[@]}"
 sweep barbara.bmp V1       "$WAVE3" $DIM3 "${V1_GRID[@]}"
 
-# ---------------------------------------------------------------- boat.png  [grayscale]
-sweep boat.png pixel    "$WAVE1" $DIM1
-sweep boat.png pixel    "$WAVE2" $DIM2
-sweep boat.png pixel    "$WAVE3" $DIM3
-sweep boat.png gaussian "$WAVE1" $DIM1
-sweep boat.png gaussian "$WAVE2" $DIM2
-sweep boat.png gaussian "$WAVE3" $DIM3
-sweep boat.png V1       "$WAVE1" $DIM1 "${V1_GRID[@]}"
-sweep boat.png V1       "$WAVE2" $DIM2 "${V1_GRID[@]}"
-sweep boat.png V1       "$WAVE3" $DIM3 "${V1_GRID[@]}"
+# ---------------------------------------------------------------- boat.bmp  [grayscale]
+sweep boat.bmp pixel    "$WAVE1" $DIM1
+sweep boat.bmp pixel    "$WAVE2" $DIM2
+sweep boat.bmp pixel    "$WAVE3" $DIM3
+sweep boat.bmp gaussian "$WAVE1" $DIM1
+sweep boat.bmp gaussian "$WAVE2" $DIM2
+sweep boat.bmp gaussian "$WAVE3" $DIM3
+sweep boat.bmp V1       "$WAVE1" $DIM1 "${V1_GRID[@]}"
+sweep boat.bmp V1       "$WAVE2" $DIM2 "${V1_GRID[@]}"
+sweep boat.bmp V1       "$WAVE3" $DIM3 "${V1_GRID[@]}"
 
-# ---------------------------------------------------------------- fruits.png  [color (RGB)]
-sweep fruits.png pixel    "$WAVE1" $DIM1 -color
-sweep fruits.png pixel    "$WAVE2" $DIM2 -color
-sweep fruits.png pixel    "$WAVE3" $DIM3 -color
-sweep fruits.png gaussian "$WAVE1" $DIM1 -color
-sweep fruits.png gaussian "$WAVE2" $DIM2 -color
-sweep fruits.png gaussian "$WAVE3" $DIM3 -color
-sweep fruits.png V1       "$WAVE1" $DIM1 "${V1_GRID[@]}" -color
-sweep fruits.png V1       "$WAVE2" $DIM2 "${V1_GRID[@]}" -color
-sweep fruits.png V1       "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
+# ---------------------------------------------------------------- fruits.bmp  [color (RGB)]
+sweep fruits.bmp pixel    "$WAVE1" $DIM1 -color
+sweep fruits.bmp pixel    "$WAVE2" $DIM2 -color
+sweep fruits.bmp pixel    "$WAVE3" $DIM3 -color
+sweep fruits.bmp gaussian "$WAVE1" $DIM1 -color
+sweep fruits.bmp gaussian "$WAVE2" $DIM2 -color
+sweep fruits.bmp gaussian "$WAVE3" $DIM3 -color
+sweep fruits.bmp V1       "$WAVE1" $DIM1 "${V1_GRID[@]}" -color
+sweep fruits.bmp V1       "$WAVE2" $DIM2 "${V1_GRID[@]}" -color
+sweep fruits.bmp V1       "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
 
 echo "done: 36 sweeps"
