@@ -57,6 +57,17 @@ def generate_Y(W, img_arr):
     return y
 
 def generate_V1_weights(num_cell, dim, cell_size, blob_size, center = None):
+    """
+    Draw num_cell V1-like receptive fields over a dim-shaped patch.
+
+    See generate_V1_observation for what cell_size and blob_size mean.  Note
+    that this one quantity carries three names across the codebase: the sweep
+    CLI and the result CSVs call it `sparse_freq`, everything in src/ calls it
+    `blob_size`, and the vendored V1_weights takes it as `spatial_freq` -- it
+    is passed positionally below.  Only `blob_size` names it correctly; the
+    other two read as a frequency but the value is a length, so increasing it
+    LOWERS the spatial frequency of the weights.
+    """
     # Store generated V1 cells in W
     n, m = dim
     W = V1_weights(num_cell, dim, cell_size, blob_size, center, scale=1)
@@ -81,13 +92,18 @@ def generate_V1_observation(img_arr, num_cell, cell_size, blob_size, center = No
         determining which pixels to grab and use.
     
     cell_size : int
-        Determines field size of opened and closed blob of data. 
-        Affect the data training.
-        
+        Width, in pixels, of the Gaussian envelope that localises each
+        receptive field about its centre; larger values spread a single
+        cell over more of the patch.  Note that it saturates: once
+        cell_size is comparable to the patch width the envelope is
+        effectively flat and the parameter stops having any effect.
+
     blob_size : int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. 
-        Affect the data training.
+        Correlation length, in pixels, of the weights inside that
+        envelope -- the characteristic width of one light/dark blob.
+        Despite the `spatial_freq` name it is given downstream, this is a
+        LENGTH, not a frequency: a larger blob_size means fewer, larger
+        blobs and therefore a LOWER spatial frequency.
     
     Returns
     ----------
@@ -377,13 +393,18 @@ def generate_observations(img_arr, num_cell, observation, cell_size = None,
         Supported observation : ['pixel', 'gaussian', 'V1'].
     
     cell_size : int
-        Determines field size of opened and closed blob of data. 
-        Affect the data training.
-        
+        Width, in pixels, of the Gaussian envelope that localises each
+        receptive field about its centre; larger values spread a single
+        cell over more of the patch.  Note that it saturates: once
+        cell_size is comparable to the patch width the envelope is
+        effectively flat and the parameter stops having any effect.
+
     blob_size : int
-        Determines filed frequency on how 
-        frequently opened and closed area would appear. 
-        Affect the data training.
+        Correlation length, in pixels, of the weights inside that
+        envelope -- the characteristic width of one light/dark blob.
+        Despite the `spatial_freq` name it is given downstream, this is a
+        LENGTH, not a frequency: a larger blob_size means fewer, larger
+        blobs and therefore a LOWER spatial frequency.
     
     Returns
     ----------
@@ -499,12 +520,18 @@ def color_experiment(img_arr, num_cell, cell_size = None, blob_size = None,
         pixels to grab and use.
     
     cell_size : int
-        Determines field size of opened and closed blob of data. 
-        Affect the data training.
-        
+        Width, in pixels, of the Gaussian envelope that localises each
+        receptive field about its centre; larger values spread a single
+        cell over more of the patch.  Note that it saturates: once
+        cell_size is comparable to the patch width the envelope is
+        effectively flat and the parameter stops having any effect.
+
     blob_size : int
-        Determines filed frequency on how frequently opened and 
-        closed area would appear. Affect the data training.
+        Correlation length, in pixels, of the weights inside that
+        envelope -- the characteristic width of one light/dark blob.
+        Despite the `spatial_freq` name it is given downstream, this is a
+        LENGTH, not a frequency: a larger blob_size means fewer, larger
+        blobs and therefore a LOWER spatial frequency.
       
     alpha : float
         Penalty for fitting data onto LASSO function to search 
@@ -611,13 +638,19 @@ def large_img_experiment(img_arr, num_cell, cell_size = None,
         Number of blobs that will be used to be determining which pixels to use.
     
     cell_size : int
-        Determines field size of opened and closed blob of data. 
-        Affect the data training.
+        Width, in pixels, of the Gaussian envelope that localises each
+        receptive field about its centre; larger values spread a single
+        cell over more of the patch.  Note that it saturates: once
+        cell_size is comparable to the patch width the envelope is
+        effectively flat and the parameter stops having any effect.
         Default set to None as only V1 obervation requires it
-        
+
     blob_size : int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. Affect the data training.
+        Correlation length, in pixels, of the weights inside that
+        envelope -- the characteristic width of one light/dark blob.
+        Despite the `spatial_freq` name it is given downstream, this is a
+        LENGTH, not a frequency: a larger blob_size means fewer, larger
+        blobs and therefore a LOWER spatial frequency.
         Default set to None as only V1 obervation requires it
     
     filter_dim : tuple
