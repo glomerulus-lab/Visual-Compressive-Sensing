@@ -246,10 +246,10 @@ def run_sim_dwt(method, observation, color, dwt_type,
         Computed normalized error value per each pixel
     '''
     dim = img_arr.shape
-    if (len(dim) == 3) :
-    	n, m, rgb = dim
-    else :
-    	n, m = dim
+    if (len(dim) == 3):
+        n, m, rgb = dim
+    else:
+        n, m = dim
     # Deal with fraction num_cell amount
     if (num_cell < 1):
         num_cell = round(n * m * num_cell)
@@ -323,9 +323,9 @@ def run_sim_V1_dwt(method, observation, color, dwt_type, lv, alpha, num_cell,
     '''
     dim = img_arr.shape
     if (len(dim) == 3) :
-    	n, m, rgb = dim
-    else :
-    	n, m = dim
+        n, m, rgb = dim
+    else:
+        n, m = dim
     # Deal with fraction num_cell amount
     if (num_cell < 1):
         num_cell = round(n * m * num_cell)
@@ -387,9 +387,9 @@ def run_sim_dct(method, observation, color, alpha, num_cell,
     '''
     dim = img_arr.shape
     if (len(dim) == 3) :
-    	n, m, rgb = dim
+        n, m, rgb = dim
     else :
-    	n, m = dim
+        n, m = dim
     # Deal with fraction num_cell amount
     if (num_cell < 1):
         num_cell = round(n * m * num_cell)
@@ -452,9 +452,9 @@ def run_sim_V1_dct(method, observation, color, alpha, num_cell, cell_size,
     '''
     dim = img_arr.shape
     if (len(dim) == 3) :
-    	n, m, rgb = dim
+        n, m, rgb = dim
     else :
-    	n, m = dim
+        n, m = dim
     # Deal with fraction num_cell amount
     if (num_cell < 1):
         num_cell = round(n * m * num_cell)

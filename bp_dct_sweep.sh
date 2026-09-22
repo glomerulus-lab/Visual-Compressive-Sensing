@@ -111,9 +111,13 @@ sweep peppers.bmp V1       "$WAVE2" $DIM2 "${V1_GRID[@]}" -color
 
 
 # 32 x 32, V1 - run last
-sweep mandril.bmp V1       "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
-sweep barbara.bmp V1       "$WAVE3" $DIM3 "${V1_GRID[@]}"
-sweep boat.bmp V1       "$WAVE3" $DIM3 "${V1_GRID[@]}"
-sweep peppers.bmp V1       "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
+NUM_REPS=1
+for i in {1..10}; do
+    echo "V1 run $i of 10"
+    sweep mandril.bmp V1 "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
+    sweep barbara.bmp V1 "$WAVE3" $DIM3 "${V1_GRID[@]}"
+    sweep boat.bmp V1    "$WAVE3" $DIM3 "${V1_GRID[@]}"
+    sweep peppers.bmp V1 "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
+done
 
 echo "done: 36 sweeps"
