@@ -66,17 +66,18 @@ WAVE2="32 56 80 104 128";     DIM2=16
 WAVE3="128 224 320 416 512";  DIM3=32
 
 # V1's own grid, unchanged from the lasso sweep
-V1_GRID=(-cell_size 50 100 200 -sparse_freq 2 4 6 8)
+#V1_GRID=(-cell_size 50 100 200 -sparse_freq 2 4 6 8)
+V1_GRID=(-cell_size 50 -sparse_freq 2 4 6 8)
 
 # ---------------------------------------------------------------- baboon.png  [color (RGB)]
-sweep baboon.png pixel    "$WAVE1" $DIM1 -color
-sweep baboon.png pixel    "$WAVE2" $DIM2 -color
-sweep baboon.png pixel    "$WAVE3" $DIM3 -color
-sweep baboon.png gaussian "$WAVE1" $DIM1 -color
-sweep baboon.png gaussian "$WAVE2" $DIM2 -color
-sweep baboon.png gaussian "$WAVE3" $DIM3 -color
-sweep baboon.png V1       "$WAVE1" $DIM1 "${V1_GRID[@]}" -color
-sweep baboon.png V1       "$WAVE2" $DIM2 "${V1_GRID[@]}" -color
+# sweep baboon.png pixel    "$WAVE1" $DIM1 -color
+# sweep baboon.png pixel    "$WAVE2" $DIM2 -color
+# sweep baboon.png pixel    "$WAVE3" $DIM3 -color
+# sweep baboon.png gaussian "$WAVE1" $DIM1 -color
+# sweep baboon.png gaussian "$WAVE2" $DIM2 -color
+# sweep baboon.png gaussian "$WAVE3" $DIM3 -color
+# sweep baboon.png V1       "$WAVE1" $DIM1 "${V1_GRID[@]}" -color
+# sweep baboon.png V1       "$WAVE2" $DIM2 "${V1_GRID[@]}" -color
 sweep baboon.png V1       "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
 
 # ---------------------------------------------------------------- barbara.bmp  [grayscale]
