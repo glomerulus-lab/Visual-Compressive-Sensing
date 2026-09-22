@@ -37,11 +37,11 @@ def add_colorbar_args(parser):
     # add hyperparams REQUIRED for V1 ONLY
     parser.add_argument(
         '-cell_size', action='store', 
-        help='[Colorbar Figure] : cell size', 
+        help='[Colorbar Figure] : V1 receptive-field envelope width, in pixels', 
         metavar='CELL_SIZE', required=False, nargs=1)
     parser.add_argument(
         '-sparse_freq', action='store', 
-        help='[Colorbar Figure] : sparse frequency',
+        help='[Colorbar Figure] : V1 blob width (correlation length) in pixels; a LENGTH, not a frequency -- larger means fewer, larger blobs',
         metavar='FREQ', required=False, nargs=1)
     # add hyperparams that are used for both dct and dwt
     parser.add_argument(
@@ -111,13 +111,15 @@ def eval_colorbar_args(args, parser):
         determining which pixels to grab and use.
     
     cell_size : int
-        Determines field size of opened and closed blob of data. 
-        Affect the data training
+        Width, in pixels, of the Gaussian envelope localising each V1
+        receptive field; saturates once it approaches the patch width
+        (called cell_size throughout)
 
     sparse_freq : int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. 
-        Affect the data training
+        Correlation length, in pixels, of the weights within that
+        envelope -- the width of one light/dark blob, named blob_size
+        in src/compress_sensing.py.  It is a LENGTH despite the name:
+        larger values give fewer, larger blobs
     '''
     method = args.method[0] if args.method is not None else None
     img_name = args.img_name[0] if args.img_name is not None else None
@@ -338,13 +340,15 @@ def parse_sweep_args():
         determining which pixels to grab and use.
     
     cell_size : List of int
-        Determines field size of opened and closed blob of data. 
-        Affect the data training.
+        Width, in pixels, of the Gaussian envelope localising each V1
+        receptive field; saturates once it approaches the patch width
+        (called cell_size throughout).
 
     sparse_freq : List of int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. 
-        Affect the data training.
+        Correlation length, in pixels, of the weights within that
+        envelope -- the width of one light/dark blob, named blob_size
+        in src/compress_sensing.py.  It is a LENGTH despite the name:
+        larger values give fewer, larger blobs.
 
     num_reps : int
         Number of repetitions per hyperparameter combination. Defaults to 10,
@@ -406,11 +410,11 @@ def add_sweep_args(parser):
     # add hyperparams REQUIRED for v1 only
     parser.add_argument(
         '-cell_size', action='store', 
-        help='cell size',
+        help='V1 receptive-field envelope width, in pixels',
         metavar='CELL_SIZE', required=False, nargs="+")
     parser.add_argument(
         '-sparse_freq', action='store', 
-        help='sparse frequency',
+        help='V1 blob width (correlation length) in pixels; a LENGTH, not a frequency -- larger means fewer, larger blobs',
         metavar='SPARSE_FREQUENCY', required=False, nargs="+")
     # add hyperparams that are used for both dct and dwt
     parser.add_argument(
@@ -485,13 +489,15 @@ def eval_sweep_args(args, parser):
         determining which pixels to grab and use.
     
     cell_size : List of int
-        Determines field size of opened and closed blob of data. 
-        Affect the data training.
+        Width, in pixels, of the Gaussian envelope localising each V1
+        receptive field; saturates once it approaches the patch width
+        (called cell_size throughout).
 
     sparse_freq : List of int
-        Determines filed frequency on how frequently 
-        opened and closed area would appear. 
-        Affect the data training.
+        Correlation length, in pixels, of the weights within that
+        envelope -- the width of one light/dark blob, named blob_size
+        in src/compress_sensing.py.  It is a LENGTH despite the name:
+        larger values give fewer, larger blobs.
 
     num_reps : int
         Number of repetitions per hyperparameter combination. Defaults to 10,
