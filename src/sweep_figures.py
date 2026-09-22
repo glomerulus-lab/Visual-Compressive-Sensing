@@ -82,12 +82,16 @@ def save(fig, outdir, name):
     print(f"  wrote {name}.svg / .jpg")
 
 
-def best_params(img, observation, algorithm, num_cell=None):
+def best_params(img, observation, algorithm, num_cell=None, filter_dim=None):
     """Hyperparameters with the lowest mean error for one image/observation.
 
     Averages over repetitions first, so a single lucky run cannot win. When
     num_cell is given the search is restricted to it, which is the knob for
-    trading reconstruction quality against runtime.
+    trading reconstruction quality against runtime. filter_dim restricts it the
+    same way, as the patch side length: the sweeps only ever use square
+    patches, so 32 means the (32, 32) rows. The stored value is the repr of a
+    tuple, so it is parsed rather than string-matched -- nothing guarantees the
+    spacing is uniform across files written at different times.
     """
     img_nm = img.split('.')[0]
     path = os.path.join(search_root(), 'result', algorithm, METHOD, img_nm,
@@ -97,6 +101,11 @@ def best_params(img, observation, algorithm, num_cell=None):
         df = df[df['num_cell'] == num_cell]
         if df.empty:
             raise SystemExit(f"no rows with num_cell={num_cell} in {path}")
+    if filter_dim is not None:
+        df = df[df['filter_dim'].map(eval) == (filter_dim, filter_dim)]
+        if df.empty:
+            raise SystemExit(
+                f"no rows with filter_dim=({filter_dim}, {filter_dim}) in {path}")
     par = [c for c in df.columns if c not in ('error', 'rep')]
     # dropna=False keeps the all-empty `alp` column of an unpenalised sweep
     # from discarding every row.
@@ -104,12 +113,13 @@ def best_params(img, observation, algorithm, num_cell=None):
     return means.loc[means['error'].idxmin()].to_dict()
 
 
-def reconstruct(img, observation, algorithm, num_cell=None, cache={}):
+def reconstruct(img, observation, algorithm, num_cell=None, filter_dim=None,
+                cache={}):
     """Reconstruct one image with its best hyperparameters (memoised)."""
-    key = (img, observation, algorithm, num_cell)
+    key = (img, observation, algorithm, num_cell, filter_dim)
     if key in cache:
         return cache[key]
-    p = best_params(img, observation, algorithm, num_cell)
+    p = best_params(img, observation, algorithm, num_cell, filter_dim)
     color = IMAGES[img]
     arr = process_image(img, color)
     kw = {}
@@ -119,7 +129,8 @@ def reconstruct(img, observation, algorithm, num_cell=None, cache={}):
     # large_img_experiment from choking on the empty `alp` cell.
     alpha = float(p['alp']) if algorithm in PENALISED else None
     print(f"    reconstructing {img:<12} {observation:<9} "
-          f"n={int(p['num_cell'])} alpha={alpha} {kw if kw else ''}")
+          f"n={int(p['num_cell'])} filter_dim={p['filter_dim']} "
+          f"alpha={alpha} {kw if kw else ''}")
     rec = large_img_experiment(
         arr, num_cell=int(p['num_cell']), alpha=alpha,
         method=METHOD, observation=observation, color=color,
@@ -148,7 +159,7 @@ def varying(fn, name, outdir, images, algorithm):
     save(fig, outdir, name)
 
 
-def reconstructions(outdir, images, algorithm, num_cell):
+def reconstructions(outdir, images, algorithm, num_cell, filter_dim=None):
     cols = ['Original'] + [LABEL[o] for o in OBSERVATIONS]
     # squeeze=False keeps axes 2-D even for a single image
     fig, axes = plt.subplots(len(images), 4, squeeze=False,
@@ -157,7 +168,8 @@ def reconstructions(outdir, images, algorithm, num_cell):
         show(axes[r][0], process_image(img, IMAGES[img]))
         axes[r][0].set_ylabel(img.split('.')[0].capitalize(), fontsize=16)
         for c, obs in enumerate(OBSERVATIONS, start=1):
-            show(axes[r][c], reconstruct(img, obs, algorithm, num_cell))
+            show(axes[r][c], reconstruct(img, obs, algorithm, num_cell,
+                                         filter_dim))
         if r == 0:
             for c, name in enumerate(cols):
                 axes[r][c].set_title(name, fontsize=16)
@@ -165,7 +177,7 @@ def reconstructions(outdir, images, algorithm, num_cell):
     save(fig, outdir, 'dct_reconstructions')
 
 
-def zoomed(outdir, algorithm, num_cell):
+def zoomed(outdir, algorithm, num_cell, filter_dim=None):
     img = ZOOM_IMAGE
     x, y, w, h = ZOOM_BOX
     full = process_image(img, IMAGES[img])
@@ -180,14 +192,15 @@ def zoomed(outdir, algorithm, num_cell):
     show(axes[1], crop(full))
     axes[1].set_title('Original', fontsize=15)
     for i, obs in enumerate(OBSERVATIONS, start=2):
-        show(axes[i], crop(reconstruct(img, obs, algorithm, num_cell)))
+        show(axes[i], crop(reconstruct(img, obs, algorithm, num_cell,
+                                       filter_dim)))
         axes[i].set_title(LABEL[obs], fontsize=15)
     fig.tight_layout()
     save(fig, outdir, 'zoomed')
 
 
 # ---------------------------------------------------------------- driver
-def build(algorithm, outdir, images, only, num_cell):
+def build(algorithm, outdir, images, only, num_cell, filter_dim=None):
     """Produce the requested figures for one solver."""
     print(f"writing to {outdir}  (algorithm={algorithm}, method={METHOD}, "
           f"images={images})")
@@ -199,9 +212,9 @@ def build(algorithm, outdir, images, only, num_cell):
         varying(error_vs_filter_dim, 'varying_filter_dim', outdir, images,
                 algorithm)
     if 'dct_reconstructions' in only:
-        reconstructions(outdir, images, algorithm, num_cell)
+        reconstructions(outdir, images, algorithm, num_cell, filter_dim)
     if 'zoomed' in only:
-        zoomed(outdir, algorithm, num_cell)
+        zoomed(outdir, algorithm, num_cell, filter_dim)
     print("done")
 
 
@@ -216,5 +229,9 @@ def main(algorithm, doc=None):
     ap.add_argument('--only', nargs='+', choices=choices, default=choices)
     ap.add_argument('--num-cell', type=int, default=None,
                     help='restrict reconstructions to this num_cell (faster)')
+    ap.add_argument('--filter-dim', type=int, default=None,
+                    help='restrict reconstructions to this patch side length, '
+                         'e.g. 32 for the (32, 32) patches')
     args = ap.parse_args()
-    build(algorithm, args.outdir, args.images, args.only, args.num_cell)
+    build(algorithm, args.outdir, args.images, args.only, args.num_cell,
+          args.filter_dim)

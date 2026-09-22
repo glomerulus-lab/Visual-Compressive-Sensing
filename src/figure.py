@@ -135,6 +135,11 @@ def error_vs_num_cell(img, method, pixel_file=None, gaussian_file=None,
     # optimize alp value for each num cell and type
     # limit data to those alp values
     
+    # The per-x-value frames are concatenated with ignore_index=True: without
+    # it every merge contributes its own 0..n-1 index and the result has
+    # duplicate labels.  seaborn only reindexes (and so only trips over that)
+    # when a plotted column contains NaN, which is exactly what a sweep point
+    # that failed and was recorded as NaN looks like.
     pixel_data = pd.DataFrame()
     gaussian_data = pd.DataFrame()
     V1_data = pd.DataFrame()
@@ -146,25 +151,25 @@ def error_vs_num_cell(img, method, pixel_file=None, gaussian_file=None,
         pixel_opt = pixel_opt[pixel_opt['num_cell']==num_cell]
         pixel_opt = pixel_opt[pixel_opt['error'] == pixel_opt['error'].min()]
         if method == 'dwt':
-            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])])
+            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])], ignore_index=True)
         elif method == 'dct':
-            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])])
+            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])], ignore_index=True)
 
         gaussian_opt = mean_data[mean_data['type'] == 'gaussian']
         gaussian_opt = gaussian_opt[gaussian_opt['num_cell']==num_cell]
         gaussian_opt = gaussian_opt[gaussian_opt['error'] == gaussian_opt['error'].min()]
         if method == 'dwt':
-            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])])
+            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])], ignore_index=True)
         if method == 'dct':
-            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])])
+            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])], ignore_index=True)
             
         V1_opt = mean_data[mean_data['type'] == 'V1']
         V1_opt = V1_opt[V1_opt['num_cell']==num_cell]
         V1_opt = V1_opt[V1_opt['error'] == V1_opt['error'].min()]
         if method == 'dwt':
-            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv'])])
+            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv'])], ignore_index=True)
         elif method == 'dct':
-            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'])])
+            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'])], ignore_index=True)
 
     #    print("V1: ", V1_data)
     ax = plt.gca() if ax is None else ax
@@ -257,27 +262,27 @@ def error_vs_filter_dim(img, method, pixel_file=None, gaussian_file=None,
         pixel_opt = pixel_opt[pixel_opt['num_cell']==n]
         pixel_opt = pixel_opt[pixel_opt['error'] == pixel_opt['error'].min()]
         if method == 'dwt':
-            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])])
+            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])], ignore_index=True)
         elif method == 'dct':
-            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])])
+            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])], ignore_index=True)
             
         gaussian_opt = mean_data[mean_data['type'] == 'gaussian']
         gaussian_opt = gaussian_opt[gaussian_opt['filter_dim']==filter_dim]
         gaussian_opt = gaussian_opt[gaussian_opt['num_cell']==n]
         gaussian_opt = gaussian_opt[gaussian_opt['error'] == gaussian_opt['error'].min()]
         if method == 'dwt':
-            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])])
+            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])], ignore_index=True)
         elif method == 'dct':
-            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])])
+            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])], ignore_index=True)
 
         V1_opt = mean_data[mean_data['type'] == 'V1']
         V1_opt = V1_opt[V1_opt['filter_dim']==filter_dim]
         V1_opt = V1_opt[V1_opt['num_cell']==n]
         V1_opt = V1_opt[V1_opt['error'] == V1_opt['error'].min()]
         if method == 'dwt':
-            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv'])])
+            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv'])], ignore_index=True)
         elif method == 'dct':
-            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'])])
+            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'])], ignore_index=True)
 
             
     ax = plt.gca() if ax is None else ax
@@ -372,25 +377,25 @@ def error_vs_alpha(img, method, pixel_file, gaussian_file, V1_file, save = False
         pixel_opt = pixel_opt[pixel_opt['alp'] == alp]
         pixel_opt = pixel_opt[pixel_opt['error'] == pixel_opt['error'].min()]
         if method == 'dwt':
-            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])])
+            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])], ignore_index=True)
         elif method == 'dct':
-            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])])
+            pixel_data = pd.concat([pixel_data, pd.merge(pixel_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])], ignore_index=True)
 
         gaussian_opt = mean_data[mean_data['type'] == 'gaussian']
         gaussian_opt = gaussian_opt[gaussian_opt['alp'] == alp]
         gaussian_opt = gaussian_opt[gaussian_opt['error'] == gaussian_opt['error'].min()]
         if method == 'dwt':
-            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])])
+            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'lv'])], ignore_index=True)
         elif method == 'dct':
-            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])])
+            gaussian_data = pd.concat([gaussian_data, pd.merge(gaussian_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim'])], ignore_index=True)
 
         V1_opt = mean_data[mean_data['type'] == 'V1']
         V1_opt = V1_opt[V1_opt['alp']==alp]
         V1_opt = V1_opt[V1_opt['error'] == V1_opt['error'].min()]
         if method == 'dwt':
-            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv'])])
+            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size', 'lv'])], ignore_index=True)
         elif method == 'dct':
-            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'])])
+            V1_data = pd.concat([V1_data, pd.merge(V1_opt, data, on=['type', 'alp', 'num_cell', 'filter_dim', 'sparse_freq', 'cell_size'])], ignore_index=True)
             
     ax = plt.gca() if ax is None else ax
     sns.lineplot(V1_data, x='alp', y='error_y', errorbar='pi', label='V1', ax=ax)
