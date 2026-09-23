@@ -13,11 +13,15 @@ from src.utility import *
 from src.args import *
 # Package for importing image representation
 from PIL import Image, ImageOps
+
 # set size for each font
 ticksize = 20 # x, y ticks
 labelsize = 20 # x, y label
 titlesize = 30 #title
 legend_size = 20 # legend text
+
+VARY_N_FILTER_DIM = str((32, 32))
+VARY_FILTER_DIM_FRAC = 0.3125
 
 def show_reconstruction_error(img_arr, reconst, method,
                               observation, num_cell, img_name): 
@@ -122,7 +126,7 @@ def error_vs_num_cell(img, method, pixel_file=None, gaussian_file=None,
         sys.exit(0)
     
     #Pre-processing data to receive
-    filter_dim = '(32, 32)'
+    filter_dim = VARY_N_FILTER_DIM
     data = process_result_data_new(img, method, 'num_cell', pixel_file, gaussian_file, V1_file, algorithm)
     data = data[data['filter_dim']==filter_dim]
     if method == 'dwt':
@@ -250,7 +254,7 @@ def error_vs_filter_dim(img, method, pixel_file=None, gaussian_file=None,
     gaussian_data = pd.DataFrame()
     V1_data = pd.DataFrame()
 
-    n_prop = 0.3125
+    n_prop = VARY_FILTER_DIM_FRAC
     #print(mean_data)
     
     for filter_dim in mean_data['filter_dim'].unique():
