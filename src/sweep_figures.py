@@ -43,8 +43,10 @@ from src.figure import error_vs_num_cell, error_vs_alpha, error_vs_filter_dim
 
 METHOD = 'dct'
 # image file -> whether the sweep for it was run in colour (-color)
-IMAGES = {'baboon.png': True, 'barbara.bmp': False,
-          'boat.png': False, 'fruits.png': True}
+# IMAGES = {'baboon.png': True, 'barbara.bmp': False,
+        #   'boat.png': False, 'fruits.png': True}
+IMAGES = {'mandril.bmp': True, 'barbara.bmp': False,
+          'boat.bmp': False, 'peppers.bmp': True}
 OBSERVATIONS = ['pixel', 'gaussian', 'V1']
 CSV = {'pixel': 'Pixel.csv', 'gaussian': 'Gaussian.csv', 'V1': 'V1.csv'}
 LABEL = {'pixel': 'Pixel', 'gaussian': 'Gaussian white noise', 'V1': 'V1-Inspired'}

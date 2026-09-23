@@ -80,14 +80,14 @@ sweep mandril.bmp V1       "$WAVE1" $DIM1 "${V1_GRID[@]}" -color
 sweep mandril.bmp V1       "$WAVE2" $DIM2 "${V1_GRID[@]}" -color
 
 # ---------------------------------------------------------------- barbara.bmp  [grayscale]
-sweep barbara.bmp pixel    "$WAVE1" $DIM1
-sweep barbara.bmp pixel    "$WAVE2" $DIM2
-sweep barbara.bmp pixel    "$WAVE3" $DIM3
-sweep barbara.bmp gaussian "$WAVE1" $DIM1
-sweep barbara.bmp gaussian "$WAVE2" $DIM2
-sweep barbara.bmp gaussian "$WAVE3" $DIM3
-sweep barbara.bmp V1       "$WAVE1" $DIM1 "${V1_GRID[@]}"
-sweep barbara.bmp V1       "$WAVE2" $DIM2 "${V1_GRID[@]}"
+# sweep barbara.bmp pixel    "$WAVE1" $DIM1
+# sweep barbara.bmp pixel    "$WAVE2" $DIM2
+# sweep barbara.bmp pixel    "$WAVE3" $DIM3
+# sweep barbara.bmp gaussian "$WAVE1" $DIM1
+# sweep barbara.bmp gaussian "$WAVE2" $DIM2
+# sweep barbara.bmp gaussian "$WAVE3" $DIM3
+# sweep barbara.bmp V1       "$WAVE1" $DIM1 "${V1_GRID[@]}"
+# sweep barbara.bmp V1       "$WAVE2" $DIM2 "${V1_GRID[@]}"
 
 # ---------------------------------------------------------------- boat.bmp  [grayscale]
 sweep boat.bmp pixel    "$WAVE1" $DIM1
@@ -115,7 +115,7 @@ NUM_REPS=1
 for i in {1..10}; do
     echo "V1 run $i of 10"
     sweep mandril.bmp V1 "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
-    sweep barbara.bmp V1 "$WAVE3" $DIM3 "${V1_GRID[@]}"
+    # sweep barbara.bmp V1 "$WAVE3" $DIM3 "${V1_GRID[@]}"
     sweep boat.bmp V1    "$WAVE3" $DIM3 "${V1_GRID[@]}"
     sweep peppers.bmp V1 "$WAVE3" $DIM3 "${V1_GRID[@]}" -color
 done
