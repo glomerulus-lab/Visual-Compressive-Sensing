@@ -223,15 +223,9 @@ At each level, the coefficients are split up into higher frequency and lower fre
 This means that as the number of levels increases, more splits occur and the attention to individual detail increases.
 
 
-\subsection{Reconstruction Using LASSO}
-Once we have formed $\mat A \in \mathbb{R}^{n \times p}$, we can find the sparse encoding from our observations using LASSO:
-\begin{equation}
-\vec z =
-\arg \min_{\vec z}
-\frac{1}{2n} \| \vec{y} - \mat A \vec z \|_2^2
-+ \alpha \| \vec z \|_1.
-\end{equation}
-Once this regression task is solved, we have a sparse vector $\vec z \in \mathbb{R}^p$.
+\subsection{Reconstruction}
+Once we have formed $\mat A \in \mathbb{R}^{n \times p}$, we solve for a sparse encoding $\vec z \in \mathbb{R}^p$ of our observations $\vec y$.
+A full description of the LASSO formulation used in some of our experiments, along with its KKT optimality conditions, is given in Appendix~\ref{app:additional-experiments}.
 The entries in $\vec z$ correspond to the most important cosine or wavelet functions for reconstructing our weighted observations $\vec y$.
 To reconstruct the image, we reshape the coefficients $\vec z$ to the appropriate shape ($d_1 \times d_2$ array for DCT or using an unravel command for DWT) and apply the inverse transform to get the estimate of the image $\hat{\vec x} = \mat U \vec z$.
 
@@ -293,40 +287,6 @@ Then rotate \textbf{z} into the $R$ basis.
 We call the elements of vector $\vec{p}$ the true image components in the PC basis of $\mat{A}$ and $\hat{\vec{p}}$ the estimated image components.
 We study the principal components by showing them in a scatter plot as well as comparing the estimated principal components and the true ones from patch 58 of \textit{Barbara}.
 
-
-\subsection{LASSO KKT Conditions}
-Cite Tibshirani paper.
-LASSO solution satisfies Karush-Kuhn-Tucker (KKT) conditions:
-\begin{align}
-    \vec{a}_i^T (\vec{y} - \mat{A} \vec{z}) 
-    &= n \lambda \, \mathrm{sign}(z_i) & \mbox{$z_i \neq 0$}\\
-    |\vec{a}_i^T (\vec{y} - \mat{A} \vec{z})| 
-    &<  n \lambda & \mbox{$z_i = 0$}
-\end{align}
-If we write $\eset$ for the set of indices with $z_i \neq 1$, set $|\eset|=S$, and define $\vec{s} = (\mathrm{sign}(z_i))$ where $\mathrm{sign}(z) = 0$ for $z=0$, and use the source condition on the observations,
-this is equivalent to the matrix system
-\begin{align}
-    \mat{A}_\eset^T \mat A(\vec{z}^* - \vec{z}) &= n \lambda \vec{s}_\eset \\
-    | \mat{A}_{\eset^c}^T \mat A (\vec{z}^* - \vec{z}) | &< n \lambda,
-\end{align}
-where $\mat{A}_\eset$ is the $n \times S$ matrix with columns from the set $\eset$.
-Likewise we get 
-$\vec p = \mat R^T (\vec z_\eset; \vec 0) = \mat R_\eset^T \vec z_\eset$, where $\mat R_\eset$ contains the rows of $\mat R$ indexed by $\eset$.
-Since $\mat A_\eset = \mat U \mat \Sigma \mat R_\eset^T$,
-The solution for the nonzero coefficients satisfies:
-\begin{align*}
-    \vec z_\eset &= 
-    (\mat A_\eset^T \mat A_\eset)^{-1}
-    \left( 
-    \mat A_\eset^T \mat A \vec z^* - n \lambda \vec s_\eset 
-    \right)   \\
-    &= 
-    (\mat R_\eset \mat \Sigma \mat R_\eset^T)^{-1}
-    \left( 
-    \mat R_\eset \mat \Sigma^2 \vec p^* - n \lambda \vec s_\eset 
-    \right)
-    &= 
-\end{align*}
 
 \subsection{Software}
 We used the code produced by \cite{pandeyStructuredRandomReceptive} to generate structured V1 weights: \url{https://github.com/BruntonUWBio/structured-random-features}.
@@ -622,6 +582,55 @@ Supervision: KDH.
 Various models from Claude code were used to clean up handwritten software, implement experiments, analyze results, and generate figures.
 These tools were also used to explore the literature when looking for applicable theory to this area.
 Computer experiments and mathematical analysis have been checked by the authors, and the authors take full responsibility for the results in this paper.
+
+\section{Additional Experiments}
+\label{app:additional-experiments}
+
+\subsection{Reconstruction Using LASSO}
+Once we have formed $\mat A \in \mathbb{R}^{n \times p}$, we can find the sparse encoding from our observations using LASSO:
+\begin{equation}
+\vec z =
+\arg \min_{\vec z}
+\frac{1}{2n} \| \vec{y} - \mat A \vec z \|_2^2
++ \alpha \| \vec z \|_1.
+\end{equation}
+Once this regression task is solved, we have a sparse vector $\vec z \in \mathbb{R}^p$.
+The entries in $\vec z$ correspond to the most important cosine or wavelet functions for reconstructing our weighted observations $\vec y$.
+To reconstruct the image, we reshape the coefficients $\vec z$ to the appropriate shape ($d_1 \times d_2$ array for DCT or using an unravel command for DWT) and apply the inverse transform to get the estimate of the image $\hat{\vec x} = \mat U \vec z$.
+
+\subsection{LASSO KKT Conditions}
+Cite Tibshirani paper.
+LASSO solution satisfies Karush-Kuhn-Tucker (KKT) conditions:
+\begin{align}
+    \vec{a}_i^T (\vec{y} - \mat{A} \vec{z})
+    &= n \lambda \, \mathrm{sign}(z_i) & \mbox{$z_i \neq 0$}\\
+    |\vec{a}_i^T (\vec{y} - \mat{A} \vec{z})|
+    &<  n \lambda & \mbox{$z_i = 0$}
+\end{align}
+If we write $\eset$ for the set of indices with $z_i \neq 1$, set $|\eset|=S$, and define $\vec{s} = (\mathrm{sign}(z_i))$ where $\mathrm{sign}(z) = 0$ for $z=0$, and use the source condition on the observations,
+this is equivalent to the matrix system
+\begin{align}
+    \mat{A}_\eset^T \mat A(\vec{z}^* - \vec{z}) &= n \lambda \vec{s}_\eset \\
+    | \mat{A}_{\eset^c}^T \mat A (\vec{z}^* - \vec{z}) | &< n \lambda,
+\end{align}
+where $\mat{A}_\eset$ is the $n \times S$ matrix with columns from the set $\eset$.
+Likewise we get
+$\vec p = \mat R^T (\vec z_\eset; \vec 0) = \mat R_\eset^T \vec z_\eset$, where $\mat R_\eset$ contains the rows of $\mat R$ indexed by $\eset$.
+Since $\mat A_\eset = \mat U \mat \Sigma \mat R_\eset^T$,
+The solution for the nonzero coefficients satisfies:
+\begin{align*}
+    \vec z_\eset &=
+    (\mat A_\eset^T \mat A_\eset)^{-1}
+    \left(
+    \mat A_\eset^T \mat A \vec z^* - n \lambda \vec s_\eset
+    \right)   \\
+    &=
+    (\mat R_\eset \mat \Sigma \mat R_\eset^T)^{-1}
+    \left(
+    \mat R_\eset \mat \Sigma^2 \vec p^* - n \lambda \vec s_\eset
+    \right)
+    &=
+\end{align*}
 
 \section{Generality of Various Experiments Across Patches}
 
