@@ -291,7 +291,9 @@ We study the principal components by showing them in a scatter plot as well as c
 
 \subsection{Software}
 We used the code produced by \cite{pandeyStructuredRandomReceptive} to generate structured V1 weights: \url{https://github.com/BruntonUWBio/structured-random-features}.
-We also significantly used numpy \cite{harrisArrayProgrammingNumPy2020} pywavelets \cite{leePyWaveletsPythonPackage2019}, scikit-learn \cite{pedregosaScikitlearnMachineLearning} and scipy \cite{virtanenSciPyFundamentalAlgorithms2020} to aid in basis-change computation and reconstruction of images.
+We also significantly used numpy \cite{harrisArrayProgrammingNumPy2020}, pywavelets \cite{leePyWaveletsPythonPackage2019}, scikit-learn \cite{pedregosaScikitlearnMachineLearning} and scipy \cite{virtanenSciPyFundamentalAlgorithms2020} to aid in basis-change computation and reconstruction of images.
+Our primary sparse solver is basis pursuit, implemented as a linear program via \texttt{scipy.optimize.linprog} (the ``highs'' method) to exactly minimize $\|\vec z\|_1$ subject to $\mat A \vec z = \vec y$.
+Our LASSO-based experiments (Appendix~\ref{app:additional-experiments}) instead use scikit-learn's \texttt{Lasso} estimator.
 
 
 \section{Results}
