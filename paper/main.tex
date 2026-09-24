@@ -303,6 +303,7 @@ Our LASSO-based experiments (Appendix~\ref{app:additional-experiments}) instead 
   \centering
   
   \caption{
+    \todo{Update for BP}
     Here, we show the zoomed in DCT reconstruction of \textit{Barbara} using each sampling method.
     On the left is the original image and each circle on the right corresponds to a zoomed in DCT reconstruction.
     We used parameters $n = 256$, $\alpha = 1$, $d = 32 \times 32$ which corresponds to a sampling percentage of $25\%$.
@@ -320,9 +321,8 @@ Our LASSO-based experiments (Appendix~\ref{app:additional-experiments}) instead 
   \caption{
     We present a reconstruction of each image in the test set using a DCT transformation, with the original image depicted in the top row. 
     Rows 2-4 are the reconstruction of each image with each row corresponding to different method of generating receptive fields.
-    We used parameters $n = 256$, $\alpha = 1$, $d = 32 \times 32$.
-    The V1 parameters were $s = 50$ and $f = 6$.
-    These reconstructions are generated from a sampling percentage of $25\%$.
+    We used parameters $n = 128$, $d = 16 \times 16$ ($50\%$ sampling percentage).
+    The V1 parameters were $s = 50$ and $f = 2$.
     \label{fig:dct_reconstructions}
   }
 \end{figure}
@@ -420,7 +420,7 @@ We then select the optimal V1 hyperparameters $s$, $f$ for each patch size if ap
 Once we have found the optimal parameters, we can plot the error as a function of the patch dimensions and include error bars to show variation across trials.
 Patch size does not seem to have a large effect on the error of reconstruction, as it seems to be roughly the same for all patch sizes that we tested as seen in Figure \ref{fig:vary_filter_dim}.
 However, we found that the smaller filter size does impact the runtime of the reconstruction.
-This is evident from Table~\ref{table:times} which shows the average time to reconstruct \textit{Baboon} for varying patch dimensions.
+This is evident from Table~\ref{table:times} (Appendix~\ref{app:additional-experiments}) which shows the average time to reconstruct \textit{Baboon} for varying patch dimensions.
 
 
 \begin{figure}[h!]
@@ -520,26 +520,7 @@ In all figures, it is also noticeable that DWT always does worse than DCT.
 The main issue that can be observed from the DWT reconstructions is the strange patch boundary effects noticeable in Figure {\ref{fig:dwt_reconstructions}}, which we are unsure how to fix.
 These results indicates that generating sample weights with covariance between pixels is more effective than generating weights that have no covariance between pixels.
 Filter window size does not seem to have an effect on error of reconstruction, but we find that it does have a rather significant effect on the runtime of reconstruction: smaller filter sizes are significantly faster.
-Because the accuracy of reconstruction is so similar between different filter sizes, we note that it is much better to use a smaller filter in order to save compute-time as seen in Table{\ref{table:times}}.
-\begin{table}[h!]
-  \centering
-  \begin{tabular}{| c c c |}
-    \hline
-    Patch Size & $n$ & Average Reconstruction Time (s) \\ 
-    \hline\hline
-    32x32 & 100 & 25.32 \\  
-    \hline
-    16x16 & 100 & 24.90\\
-    \hline
-    8x8 & 100 & 8.69 \\
-    \hline
-  \end{tabular}
-  \caption{
-  \todo{Remove table}
-  Average reconstruction time for varying patch dimension over 50 trials for \textit{Baboon} with $n=100$ and $\alpha = 1$ using the pixel sampling method.}
-  \label{table:times}
- 
-\end{table}
+Because the accuracy of reconstruction is so similar between different filter sizes, we note that it is much better to use a smaller filter in order to save compute-time as seen in Table{\ref{table:times}} (Appendix~\ref{app:additional-experiments}).
 
 We also find that the current theory of mutual coherence does not seem to apply to V1-like sensing.
 The maximum similarity between column vectors of V1-like design matrices far exceed that of matrices using Gaussian and pixel sampling.
@@ -593,6 +574,26 @@ Computer experiments and mathematical analysis have been checked by the authors,
 In our LASSO-based experiments, the grid search described in Methods is additionally extended over the LASSO penalty $\alpha \in \{0.01, 0.1, 1, 10\}$.
 DWT reconstruction was only performed with the LASSO solver, and includes 2 unique parameters: ``db2'' Daubechies wavelets, and level $\in \{1, 2, 3\}$.
 These parameters are combined with $s$, $f$, $n$, and the patch dimensions from Methods to generate the full LASSO search space, with each combination repeated 10 times.
+
+\begin{table}[h!]
+  \centering
+  \begin{tabular}{| c c c |}
+    \hline
+    Patch Size & $n$ & Average Reconstruction Time (s) \\
+    \hline\hline
+    32x32 & 100 & 25.32 \\
+    \hline
+    16x16 & 100 & 24.90\\
+    \hline
+    8x8 & 100 & 8.69 \\
+    \hline
+  \end{tabular}
+  \caption{
+  \todo{Remove table}
+  Average reconstruction time for varying patch dimension over 50 trials for \textit{Baboon} with $n=100$ and $\alpha = 1$ using the pixel sampling method.}
+  \label{table:times}
+
+\end{table}
 
 \subsection{Reconstruction Using LASSO}
 Once we have formed $\mat A \in \mathbb{R}^{n \times p}$, we can find the sparse encoding from our observations using LASSO:
