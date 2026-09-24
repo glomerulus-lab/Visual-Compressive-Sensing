@@ -243,16 +243,16 @@ This yielded similar results when compared to generating a new $\mat W$ for each
 \subsection{Experiments}
 We tested the effectiveness of these different random sampling methods by performing a grid search over many parameters.
 The results were then analyzed to see how various parameters effect the accuracy of reconstruction.
-The hyperparameters which we vary are the LASSO penalty $\alpha$, field size $s$, spatial bandwidth $f$, and \texttt{level},
+The hyperparameters which we vary are field size $s$ and spatial bandwidth $f$ (for V1-like sampling only).
 We also test the impact of varying $n$, and the patch dimensions $d_1$ and $d_2$.
 In all sampling scenarios and trials we use $d_1 = d_2$ for square patches.
-All DCT trials use the same hyperparameters: $s \in \{50, 100, 200\}$ and $f \in \{2, 4, 6, 8\}$, $\alpha \in \{0.01, 0.1, 1, 10\}$, $d \in \{8 \times 8, 16 \times 16, 32 \times 32\}$.
+All DCT trials use the same hyperparameters: $s \in \{50, 100, 200\}$ and $f \in \{2, 4, 6, 8\}$, $d \in \{8 \times 8, 16 \times 16, 32 \times 32\}$.
 In order to make reconstructing different patch sizes comparable, we used the same sampling percentage per patch, but this results in different $n$ for different patch sizes.
 Our sampling percentage were $12.5\%, 21.9\%, 31.3\%, 40.6\%, 50\%$.
-For $d = 64, 256, 1024$ this resulted in $n \in \{8, 14, 20, 26, 32\}, \{32, 56, 80, 104, 128\},$ and $\{128, 224, 320, 416, 512\}$ respectively. 
-DWT includes 2 unique parameters: ``db2'' Daubechies wavelets, and level $ \in \{1, 2, 3\}$.
+For $d = 64, 256, 1024$ this resulted in $n \in \{8, 14, 20, 26, 32\}, \{32, 56, 80, 104, 128\},$ and $\{128, 224, 320, 416, 512\}$ respectively.
 We then generate our search space by computing all possible parameters between those sets, and repeating each combination 10 times.
 The accuracy of each construction is quantified by computing the root mean square error: $\mathrm{Error} = \frac{1}{\sqrt{d}}||\vec x - \mat U \vec z||_F$
+Additional hyperparameters used only in our LASSO-based experiments---the penalty $\alpha$ and the DWT \texttt{level}---are described in Appendix~\ref{app:additional-experiments}.
 
 \subsection{V1-like Design Matrix Experiment Methods}
 
@@ -585,6 +585,11 @@ Computer experiments and mathematical analysis have been checked by the authors,
 
 \section{Additional Experiments}
 \label{app:additional-experiments}
+
+\subsection{LASSO Experiment Parameters}
+In our LASSO-based experiments, the grid search described in Methods is additionally extended over the LASSO penalty $\alpha \in \{0.01, 0.1, 1, 10\}$.
+DWT reconstruction was only performed with the LASSO solver, and includes 2 unique parameters: ``db2'' Daubechies wavelets, and level $\in \{1, 2, 3\}$.
+These parameters are combined with $s$, $f$, $n$, and the patch dimensions from Methods to generate the full LASSO search space, with each combination repeated 10 times.
 
 \subsection{Reconstruction Using LASSO}
 Once we have formed $\mat A \in \mathbb{R}^{n \times p}$, we can find the sparse encoding from our observations using LASSO:
