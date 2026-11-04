@@ -26,7 +26,7 @@ This was setup by running `uv venv; uv pip install -r requirements.txt`.
 Core pipeline (all in `src/`):
 
 - **`src/compress_sensing.py`** — the math core. For any observation method, an experiment generates a weight/sampling matrix `W` and observed values `y = W @ img`, then reconstructs the image by fitting `Lasso` on `y` against `W` transformed into a sparse basis, and inverting that transform.
-  - `generate_pixel_observation` / `generate_gaussian_observation` / `generate_V1_observation` — build `W` (and derived `y`) for the three observation types. V1 weights come from the vendored `structured_random_features` package (see below).
+  - `generate_pixel_observation` / `generate_gaussian_observation` / `generate_V1_observation` — build `W` (and derived `y`) for the three observation types. V1 weights come from the external `structured_random_features` package (see below).
   - `fourier_reconstruct` (DCT basis) / `wavelet_reconstruct` (DWT basis, via `pywt`) — fit a sparse solver in the transform domain and invert. `fourier_reconstruct` takes `algorithm` ∈ {`lasso`, `ridge`, `omp`, `bp`} (`bp` = exact basis pursuit via `scipy.optimize.linprog`, no alpha); `wavelet_reconstruct` is LASSO-only.
   - `reconstruct(W, y, ...)` — dispatches to one of the above based on `method='dct'|'dwt'`. Works on a single 2D (grayscale) patch.
   - `color_experiment` — runs `reconstruct` independently per RGB channel (reusing one `W` across channels when passed in).
@@ -52,9 +52,9 @@ figures/<algorithm>/paper_new/                        # paper figures (output of
 
 The `<algorithm>` level keeps each solver's sweeps and figures in their own subtree. `data_save_path`/`fig_save_path`/`load_dataframe*` and the `-algorithm` flag on both CLIs all default it to `lasso`, which is what every result predating basis pursuit was produced with. Other top-level `figures/` directories (`paper/`, `paper_plots_256/`, `plot_pics/`, ...) predate the split and are not algorithm-scoped.
 
-### `structured_random_features/`
+### `structured_random_features` (external dependency)
 
-A vendored (not a git submodule) copy of an external research package providing the biological receptive-field model. `src/compress_sensing.py` only depends on `structured_random_features.src.models.weights.V1_weights`. Treat the rest of this directory as third-party code — avoid modifying it unless the task specifically concerns the V1 weight generation.
+An external research package (https://github.com/glomerulus-lab/structured-random-features) providing the biological receptive-field model, installed from git via `uv` (`[tool.uv.sources]` in `pyproject.toml`). `src/compress_sensing.py` only depends on `structured_random_features.models.weights.V1_weights`. It is no longer vendored in this repo; changes to V1 weight generation belong in the upstream repo.
 
 ### `experiment/`, `notebooks/`, `matrix_experiments/`, `src/prototype_functions/`
 

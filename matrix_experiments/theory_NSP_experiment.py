@@ -38,7 +38,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.fft import dctn, idctn
 
-from structured_random_features.src.models.weights import V1_covariance_matrix
+from structured_random_features.models.weights import V1_covariance_matrix
 
 from .plots.paper_plots import process_image, extract_patches, run_selected_patches
 from .plots.exp_constants import CELL_SIZE, BLOB_SIZE, PATCH_SIZE, IMAGE_FILE

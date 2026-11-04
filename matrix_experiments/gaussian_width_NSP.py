@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from scipy.fft import dctn
-from structured_random_features.src.models.weights import V1_covariance_matrix
+from structured_random_features.models.weights import V1_covariance_matrix
 
 from .plots.exp_constants import CELL_SIZE, BLOB_SIZE, PATCH_SIZE
 

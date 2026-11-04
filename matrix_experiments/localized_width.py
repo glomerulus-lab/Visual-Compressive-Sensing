@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 from .plots.paper_plots import process_image, extract_patches, run_selected_patches
 from .plots.exp_constants import *
-from structured_random_features.src.models.weights import V1_covariance_matrix
+from structured_random_features.models.weights import V1_covariance_matrix
 
 dim = (PATCH_SIZE, PATCH_SIZE)
 d = PATCH_SIZE * PATCH_SIZE

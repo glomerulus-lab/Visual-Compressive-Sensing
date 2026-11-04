@@ -40,8 +40,8 @@ All importable source code lives here.
   transformed into a sparsifying basis, then inverting that transform.
   - `generate_pixel_observation` / `generate_gaussian_observation` /
     `generate_V1_observation` -- build `W` (and `y`) for the three observation
-    types. V1 weights come from the vendored `structured_random_features`
-    package.
+    types. V1 weights come from the external `structured_random_features`
+    package (installed from GitHub via `uv`).
   - `fourier_reconstruct` (DCT basis) / `wavelet_reconstruct` (DWT basis, via
     `pywt`) -- fit in the transform domain and invert. `fourier_reconstruct`
     takes `algorithm` in {`lasso`, `ridge`, `omp`, `bp`} (`bp` = exact basis
@@ -89,10 +89,12 @@ Where figures generated from the result data are stored, mirroring the `result/`
 layout, plus `figures/<algorithm>/paper_new/` for the paper figures.
 
 ### structured_random_features
-A vendored (not a submodule) copy of an external research package providing the
-biological receptive-field model. Only
-`structured_random_features.src.models.weights.V1_weights` is used; treat the
-rest as third-party code.
+An external research package providing the biological receptive-field model,
+installed as a dependency from
+<https://github.com/glomerulus-lab/structured-random-features> (see
+`[tool.uv.sources]` in `pyproject.toml`). Only
+`structured_random_features.models.weights.V1_weights` (and
+`V1_covariance_matrix`) is used. Changes belong in the upstream repo.
 
 ### experiment, notebooks, matrix_experiments, src/prototype_functions
 Jupyter notebooks and standalone scripts used for exploratory analysis. They are

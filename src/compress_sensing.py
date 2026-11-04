@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 import os
-from structured_random_features.src.models.weights import V1_weights
+from structured_random_features.models.weights import V1_weights
 
 # Packages for dct, dwt and fitting data
 from scipy import fftpack as fft
