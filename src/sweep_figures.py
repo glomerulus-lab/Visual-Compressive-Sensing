@@ -229,9 +229,9 @@ def main(algorithm, doc=None):
     ap.add_argument('--outdir', default=default_outdir(algorithm))
     ap.add_argument('--images', nargs='+', default=list(IMAGES))
     ap.add_argument('--only', nargs='+', choices=choices, default=choices)
-    ap.add_argument('--num-cell', type=int, default=None,
+    ap.add_argument('--num-cell', type=int, default=128,
                     help='restrict reconstructions to this num_cell (faster)')
-    ap.add_argument('--filter-dim', type=int, default=None,
+    ap.add_argument('--filter-dim', type=int, default=16,
                     help='restrict reconstructions to this patch side length, '
                          'e.g. 32 for the (32, 32) patches')
     args = ap.parse_args()
